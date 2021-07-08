@@ -58,30 +58,37 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
         self._length = len(self.image_paths)
 
-    def __patch_sampler(self, image: ImageReader, mask: ImageReader):
+    def __cascade_sampler(self, image: ImageReader, mask: ImageReader):
         rng = np.random.default_rng()
 
-        level = -1
-        spacing = mask.spacings[level]
-        size_ratio = round(spacing / image.refine(self.spacing))
-        options = np.where(mask.read(spacing, 0, 0, *mask.shapes[level]))
+        start_level = -1
+        size = mask.shapes[start_level]
+        idx = np.array([0, 0])
+        target_spacing = image.refine(self.spacing)
 
-        idx = np.array([
-            options[i][rng.integers(len(options[0]))]
-            for i in range(2)
-        ]) * size_ratio + rng.integers(size_ratio, size=2)
+        for spacing in mask.spacings[start_level::-1]:
+            idx *= 2
 
-        return mask.read_center(self.spacing, *idx, *self.patch_size)
+            options = np.asarray(np.where(mask.read(spacing, *idx, *size, normalized=True))[:2])
+            idx += rng.choice(options, axis=-1)
+
+            if np.isclose(spacing, target_spacing):
+                break
+            
+            size = (2, 2)
+
+        return image.read_center(
+            target_spacing,
+            *(idx*round(spacing / target_spacing)), # NOP if spacing == target_spacing
+            *self.patch_size
+        )
 
 
     def __getitem__(self, index):
         image = ImageReader(self.image_paths[index], self.spacing_tolerance)
         mask = ImageReader(self.mask_paths[index], self.spacing_tolerance)
 
-        import matplotlib.pyplot as plt
-        self.__patch_sampler(image, mask)
-
-        print(sum(np.any(self.__patch_sampler(image, mask) < 255) for _ in range(10)))
+        patch = self.__cascade_sampler(image, mask)
 
         return patch if self.transforms is None else self.transforms(patch)
 
@@ -92,4 +99,5 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 if __name__ == '__main__':
     data_dir = Path('/project/robertsc/examode/CAMELYON16/')
     dataset = CAMELYON16RandomPatchDataSet(data_dir, 0.5, 0.04, (128,128))
-    dataset[1]
+    res = dataset[1]
+    print(np.any(np.logical_or(res > 0, res < 255)))
