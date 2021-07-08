@@ -1,7 +1,7 @@
 from typing import Callable, Sequence
 from itertools import chain
 
-
+import torch
 import numpy as np
 import pytorch_lightning as pl
 from torch.utils.data import Dataset
@@ -23,6 +23,8 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
         self.spacing = spacing
         self.spacing_tolerance = spacing_tolerance
+        self.patch_size = patch_size
+        self.transforms = transforms
 
         is_training_pattern = '[normal|tumor]' if train else '[test]'
 
@@ -56,14 +58,30 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
         self._length = len(self.image_paths)
 
-    def __cascade_sampler(self, image: ImageReader, mask: ImageReader):
-        pass
+    def __patch_sampler(self, image: ImageReader, mask: ImageReader):
+        rng = np.random.default_rng()
+
+        level = -1
+        spacing = mask.spacings[level]
+        size_ratio = round(spacing / image.refine(self.spacing))
+        options = np.where(mask.read(spacing, 0, 0, *mask.shapes[level]))
+
+        idx = np.array([
+            options[i][rng.integers(len(options[0]))]
+            for i in range(2)
+        ]) * size_ratio + rng.integers(size_ratio, size=2)
+
+        return mask.read_center(self.spacing, *idx, *self.patch_size)
+
 
     def __getitem__(self, index):
         image = ImageReader(self.image_paths[index], self.spacing_tolerance)
         mask = ImageReader(self.mask_paths[index], self.spacing_tolerance)
 
-        patch = self.__cascade_sampler(image, mask)
+        import matplotlib.pyplot as plt
+        self.__patch_sampler(image, mask)
+
+        print(sum(np.any(self.__patch_sampler(image, mask) < 255) for _ in range(10)))
 
         return patch if self.transforms is None else self.transforms(patch)
 
@@ -73,5 +91,5 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
 if __name__ == '__main__':
     data_dir = Path('/project/robertsc/examode/CAMELYON16/')
-    dataset = CAMELYON16RandomPatchDataSet(data_dir, 0.5, 0.02, (128,128))
+    dataset = CAMELYON16RandomPatchDataSet(data_dir, 0.5, 0.04, (128,128))
     dataset[1]
