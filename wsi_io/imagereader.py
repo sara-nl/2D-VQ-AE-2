@@ -553,5 +553,4 @@ class ImageReader(object):
         """Close the image object. No further reading is possible after calling this function."""
 
         if self.__image is not None:
-            self.__image.close()
             self.__image = None

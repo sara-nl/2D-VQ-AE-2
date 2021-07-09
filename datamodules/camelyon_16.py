@@ -64,7 +64,9 @@ class CAMELYON16RandomPatchDataSet(Dataset):
         start_level = -1
         size = mask.shapes[start_level]
         idx = np.array([0, 0])
+
         target_spacing = image.refine(self.spacing)
+        assert target_spacing <= mask.spacings[start_level]
 
         for spacing in mask.spacings[start_level::-1]:
             idx *= 2
@@ -74,14 +76,14 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
             if np.isclose(spacing, target_spacing):
                 break
-            
+
             size = (2, 2)
 
-        return image.read_center(
-            target_spacing,
-            *(idx*round(spacing / target_spacing)), # NOP if spacing == target_spacing
-            *self.patch_size
-        )
+        # NOP if spacing == target_spacing
+        discrepancy = round(spacing / target_spacing)
+        idx = idx * discrepancy + rng.integers(discrepancy, size=2)
+
+        return image.read_center(target_spacing, *idx, *self.patch_size)
 
 
     def __getitem__(self, index):
@@ -89,7 +91,6 @@ class CAMELYON16RandomPatchDataSet(Dataset):
         mask = ImageReader(self.mask_paths[index], self.spacing_tolerance)
 
         patch = self.__cascade_sampler(image, mask)
-
         return patch if self.transforms is None else self.transforms(patch)
 
     def __len__(self):
@@ -99,5 +100,10 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 if __name__ == '__main__':
     data_dir = Path('/project/robertsc/examode/CAMELYON16/')
     dataset = CAMELYON16RandomPatchDataSet(data_dir, 0.5, 0.04, (128,128))
-    res = dataset[1]
-    print(np.any(np.logical_or(res > 0, res < 255)))
+
+    datapoint_index, n_tries = 1, 1000
+    n_success = sum(
+        np.any(np.logical_or(dataset[datapoint_index] > 0, dataset[datapoint_index] < 255))
+        for _ in range(n_tries)
+    )
+    print(f'succes: {n_success}/{n_tries}')
