@@ -1,6 +1,7 @@
 from typing import Callable, Sequence
 from itertools import chain
 from argparse import Namespace, ArgumentParser
+from functools import partial
 
 import torch
 import numpy as np
@@ -16,6 +17,11 @@ class CAMELYON16DataModule(pl.LightningDataModule):
     def __init__(self, args: Namespace):
         super().__init__()
         self._parse_input_args_(args)
+        self.init_train_dataset, self.init_test_dataset = (
+            partial(CAMELYON16RandomPatchDataSet, args=args, train=True),
+            partial(CAMELYON16RandomPatchDataSet, args=args, train=False)
+        )
+
 
     def _parse_input_args_(self, args: Namespace):
         attr_setter_(
@@ -50,11 +56,20 @@ class CAMELYON16DataModule(pl.LightningDataModule):
         return parser
 
     def setup(self, stage=None):
-        train_len = round(len(dataset) * self.train_frac)
-        val_len = len(dataset) - train_len
 
-        # train/val split
-        self.train_dataset, self.val_dataset = random_split(dataset, [train_len, val_len])
+        if stage == 'fit' or stage is None:
+            dataset = self.init_train_dataset()
+            train_len, val_len = (
+                (tl := round(len(dataset) * self.train_frac)),
+                len(dataset) - tl
+            )
+
+            # train/val split
+            self.train_dataset, self.val_dataset = random_split(dataset, [train_len, val_len])
+
+        if stage == 'test' or stage is None:
+            self.test_dataset = self.init_test_dataset()
+
 
     def train_dataloader(self):
         return DataLoader(
