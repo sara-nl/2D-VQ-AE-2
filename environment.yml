@@ -19,7 +19,7 @@ dependencies:
   - brotlipy=0.7.0=py38h497a2fe_1001
   - bzip2=1.0.8=h7b6447c_0
   - c-ares=1.17.1=h7f98852_1
-  - ca-certificates=2021.5.30=ha878542_0
+  - ca-certificates=2021.7.5=h06a4308_1
   - cached-property=1.5.2=py_0
   - cachetools=4.2.2=pyhd8ed1ab_0
   - certifi=2021.5.30=py38h06a4308_0
@@ -201,4 +201,7 @@ dependencies:
   - zipp=3.4.1=pyhd8ed1ab_0
   - zlib=1.2.11=h7b6447c_3
   - zstd=1.4.9=haebb681_0
+  - pip:
+    - albumentations==1.0.2
+    - opencv-python-headless==4.5.3.56
 prefix: /home/robertsc/.conda/envs/2D-VQ-AE-2
