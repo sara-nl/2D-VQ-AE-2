@@ -156,7 +156,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
 
         # Dataset specific arguments
-        parser.add_argument('--data-dir', type=Path)
+        parser.add_argument('--data-dir', type=Path, required=True)
         parser.add_argument('--spacing', default=0.5, type=float)
         parser.add_argument('--spacing-tolerance', default=0.15, type=float)
         parser.add_argument('--patch-size', default=[128, 128], nargs=2, type=int)
