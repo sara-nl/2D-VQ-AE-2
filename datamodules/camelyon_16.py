@@ -1,9 +1,7 @@
-from typing import Callable, Sequence
-from itertools import chain
+from typing import Callable
 from argparse import Namespace, ArgumentParser
 from functools import partial
 
-import torch
 import numpy as np
 import pytorch_lightning as pl
 from torch.utils.data import Dataset, DataLoader, random_split
@@ -16,6 +14,7 @@ from utils.argparse_helpers import attr_setter_, booltype
 class CAMELYON16DataModule(pl.LightningDataModule):
     def __init__(self, args: Namespace):
         super().__init__()
+
         self._parse_input_args_(args)
         self.init_train_dataset, self.init_test_dataset = (
             partial(CAMELYON16RandomPatchDataSet, args=args, train=True),
@@ -23,7 +22,7 @@ class CAMELYON16DataModule(pl.LightningDataModule):
         )
 
 
-    def _parse_input_args_(self, args: Namespace):
+    def _parse_input_args_(self, args: Namespace) -> None:
         attr_setter_(
             self,
             args,
@@ -37,15 +36,17 @@ class CAMELYON16DataModule(pl.LightningDataModule):
         )
 
     @classmethod
-    def add_datamodule_specific_args(cls, parent_parser):
+    def add_datamodule_specific_args(cls, parent_parser: ArgumentParser) -> ArgumentParser:
         parser = ArgumentParser(parents=[parent_parser], add_help=False)
 
         # DataModule specific arguments
+        parser = parent_parser.add_argument_group('Camelyon16 DataModule')
         parser.add_argument('--train-frac', default=0.95, type=int)
 
+        parser = parent_parser.add_argument_group('Camelyon16 DataLoader')
         # Dataloader specific arguments
         parser.add_argument('--batch-size', default=16, type=int)
-        parser.add_argument('--num-workers', default=6, type=int)
+        parser.add_argument('--num-workers', default=0, type=int)
         parser.add_argument('--shuffle-dataset', default=True, type=booltype)
         parser.add_argument('--drop-last', default=True, type=booltype)
         parser.add_argument('--prefetch-factor', default=2, type=int)
@@ -53,14 +54,14 @@ class CAMELYON16DataModule(pl.LightningDataModule):
         # Dataset specific arguments
         parser = CAMELYON16RandomPatchDataSet.add_dataset_specific_args(parser)
 
-        return parser
+        return parent_parser
 
     def setup(self, stage=None):
 
         if stage == 'fit' or stage is None:
             dataset = self.init_train_dataset()
             train_len, val_len = (
-                (tl := round(len(dataset) * self.train_frac)),
+                (tl := round(len(dataset) * self.train_frac) - 1),
                 len(dataset) - tl
             )
 
@@ -112,7 +113,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
         is_training_pattern = '[normal|tumor]' if self.train else '[test]'
 
         image_paths, mask_paths = (
-            list(data_dir.glob(f'{modality}/?{is_training_pattern}*.tif'))
+            list(self.data_dir.glob(f'{modality}/?{is_training_pattern}*.tif'))
             for modality in ('images', 'tissue_masks')
         )
 
@@ -139,7 +140,8 @@ class CAMELYON16RandomPatchDataSet(Dataset):
             for modality_paths in (image_paths, mask_paths)
         )
 
-        self._length = len(self.image_paths)
+        self.n_wsi = len(self.image_paths)
+        self._length = self.n_wsi * self.n_patches_per_wsi
 
     def _parse_input_args_(self, args: Namespace):
         attr_setter_(
@@ -148,22 +150,24 @@ class CAMELYON16RandomPatchDataSet(Dataset):
             'data_dir',
             ('spacing', lambda x: x > 0),
             ('spacing_tolerance', lambda x: x >= 0),
-            ('patch_size', lambda x: all(elem > 0 for elem in x))
+            ('patch_size', lambda x: all(elem > 0 for elem in x)),
+            ('n_patches_per_wsi', lambda x: x > 0),
         )
 
     @classmethod
-    def add_dataset_specific_args(cls, parent_parser):
-        parser = ArgumentParser(parents=[parent_parser], add_help=False)
+    def add_dataset_specific_args(cls, parent_parser: ArgumentParser) -> ArgumentParser:
+        parser = parent_parser.add_argument_group('Camelyon16 Dataset')
 
         # Dataset specific arguments
         parser.add_argument('--data-dir', type=Path, required=True)
         parser.add_argument('--spacing', default=0.5, type=float)
         parser.add_argument('--spacing-tolerance', default=0.15, type=float)
         parser.add_argument('--patch-size', default=[128, 128], nargs=2, type=int)
+        parser.add_argument('--n-patches-per-wsi', default=1000, type=int)
 
-        return parser
+        return parent_parser
 
-    def __cascade_sampler(self, image: ImageReader, mask: ImageReader):
+    def __cascade_sampler(self, image: ImageReader, mask: ImageReader) -> np.array:
         rng = np.random.default_rng()
 
         start_level = -1
@@ -190,47 +194,14 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
         return image.read_center(target_spacing, *idx, *self.patch_size)
 
+    def __getitem__(self, index: int) -> np.array:
+        wsi_index = index % self.n_wsi
 
-    def __getitem__(self, index):
-        image = ImageReader(self.image_paths[index], self.spacing_tolerance)
-        mask = ImageReader(self.mask_paths[index], self.spacing_tolerance)
+        image = ImageReader(self.image_paths[wsi_index], self.spacing_tolerance)
+        mask = ImageReader(self.mask_paths[wsi_index], self.spacing_tolerance)
 
         patch = self.__cascade_sampler(image, mask)
         return patch if self.transforms is None else self.transforms(patch)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._length
-
-
-if __name__ == '__main__':
-    data_dir = Path('/project/robertsc/examode/CAMELYON16/')
-
-
-    # Dataset test
-    parser = ArgumentParser()
-    parser = CAMELYON16RandomPatchDataSet.add_dataset_specific_args(parser)
-    config = parser.parse_args(['--data-dir', str(data_dir)])
-
-    dataset = CAMELYON16RandomPatchDataSet(config)
-
-    # check for tissue
-    datapoint_index, n_tries = 1, 1
-    n_success = sum(
-        np.any(np.logical_or(dataset[datapoint_index] > 0, dataset[datapoint_index] < 255))
-        for _ in range(n_tries)
-    )
-    print(f'succes: {n_success}/{n_tries}')
-
-
-    # Datamodule test
-    parser = ArgumentParser()
-    parser = CAMELYON16DataModule.add_datamodule_specific_args(parser)
-    config = parser.parse_args(['--data-dir', str(data_dir), '--num-workers', 0])
-
-    datamodule = CAMELYON16DataModule(config)
-    datamodule.setup()
-
-    train_dataloader = datamodule.train_dataloader()
-    val_dataloader = datamodule.val_dataloader()
-    train_datapoint = next(iter(train_dataloader))
-    val_datapoint = next(iter(val_dataloader))
