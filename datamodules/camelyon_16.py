@@ -46,7 +46,7 @@ class CAMELYON16DataModule(pl.LightningDataModule):
         parser = parent_parser.add_argument_group('Camelyon16 DataLoader')
         # Dataloader specific arguments
         parser.add_argument('--batch-size', default=16, type=int)
-        parser.add_argument('--num-workers', default=0, type=int)
+        parser.add_argument('--num-workers', default=6, type=int)
         parser.add_argument('--shuffle-dataset', default=True, type=booltype)
         parser.add_argument('--drop-last', default=True, type=booltype)
         parser.add_argument('--prefetch-factor', default=2, type=int)
@@ -61,9 +61,11 @@ class CAMELYON16DataModule(pl.LightningDataModule):
         if stage == 'fit' or stage is None:
             dataset = self.init_train_dataset()
             train_len, val_len = (
-                (tl := round(len(dataset) * self.train_frac) - 1),
+                (tl := round(len(dataset) * self.train_frac)),
                 len(dataset) - tl
             )
+
+            assert val_len > 0, "Validation dataset split length is 0!"
 
             # train/val split
             self.train_dataset, self.val_dataset = random_split(dataset, [train_len, val_len])
@@ -86,7 +88,7 @@ class CAMELYON16DataModule(pl.LightningDataModule):
     def val_dataloader(self):
         return DataLoader(
             self.val_dataset,
-            shuffle=True,
+            shuffle=False,
             num_workers=self.num_workers,
             pin_memory=True,
             drop_last=self.drop_last,

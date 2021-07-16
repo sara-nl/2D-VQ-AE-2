@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="2D-VQ-AE-2",
+    name="vq-ae-2-2d",
     version="0.0.1",
     author="Robert Jan Schlimbach",
     description="2D Vector-Quantized Auto-Encoder for compression of Whole-Slide Images in Histopathology",
