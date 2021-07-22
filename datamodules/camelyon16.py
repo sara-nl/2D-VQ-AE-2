@@ -1,18 +1,18 @@
 from typing import Callable, Sequence, Tuple, Optional
 from dataclasses import dataclass
 from pathlib import Path
-from enum import Enum, auto
+from itertools import chain, zip_longest
 
 import numpy as np
 import pytorch_lightning as pl
 from hydra.utils import instantiate
-from torch._C import EnumType
-from torch.utils.data import Dataset, dataset, random_split
+from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
 
 from wsi_io.imagereader import ImageReader
 from conf.preprocessing.datamodule import CAMELYON16DataloaderConf
 from utils.train_helpers import Stage
+
 
 @dataclass
 class CAMELYON16DataModule(pl.LightningDataModule):
@@ -46,22 +46,31 @@ class CAMELYON16RandomPatchDataSet(Dataset):
     train_frac: float
 
     def __post_init__(self):
-        from itertools import chain, zip_longest
 
-
-        def merge_scan_paths(*scan_types: Sequence):
+        def merge_scan_paths(*scan_types: Sequence) -> Tuple[np.array, np.array]:
             '''
-            practically: merge n lists of unequal size:
+            practically: merge n lists of unequal size, also based on `self.train_frac`:
             [(a, a), (b, b)], [(c,),(d,)] into
             [(a, c), (a,)],   [(b, d), (b,)]
 
             This function is obviously extremely overengineered.
             '''
-            return map(lambda x: list(filter(None, chain.from_iterable(zip_longest(*x)))),
-                       zip(*(map(self._find_image_mask_pairs_paths, scan_types))))
+            assert self.train in [Stage.TRAIN, Stage.VALIDATION]
 
+            paths = list(map(self._find_image_mask_pairs_paths, scan_types))
+            for i, path in enumerate(paths):
 
-        # for ((normal_image, normal_mask), (tumor_image, tumor_mask)) in zip_longest()
+                length, frac = (ln := len(path[0])), round(ln*self.train_frac)
+                paths[i] = [
+                    elem[(slice(frac) if self.train is Stage.TRAIN else slice(frac, length))]
+                    for elem in path
+                ]
+
+            return tuple(map(
+                lambda x: np.asarray(list(filter(None, chain.from_iterable(zip_longest(*x))))),
+                zip(*paths)
+            ))
+
 
         self.image_paths, self.mask_paths = (
             self.__find_image_mask_pairs_paths(pattern='test')
@@ -69,11 +78,9 @@ class CAMELYON16RandomPatchDataSet(Dataset):
             else merge_scan_paths('normal', 'tumor')
         )
 
-
-        breakpoint()
-
         self.n_wsi = len(self.image_paths)
         self._length = self.n_wsi * self.n_patches_per_wsi
+
 
     def _find_image_mask_pairs_paths(self, pattern: str) -> Tuple[np.array, np.array]:
         image_paths, mask_paths = (
@@ -103,7 +110,6 @@ class CAMELYON16RandomPatchDataSet(Dataset):
             np.sort(list(map(str, modality_paths)))
             for modality_paths in (image_paths, mask_paths)
         )
-
 
     def __cascade_sampler(self, image: ImageReader, mask: ImageReader) -> np.array:
         rng = np.random.default_rng()

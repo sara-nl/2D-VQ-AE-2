@@ -10,7 +10,7 @@ class ModelConf(ABC):
     _target_: str = 'pytorch_lightning.LightningModule'
 
 @dataclass
-class DatamoduleConf(ABC):
+class DataModuleConf(ABC):
     _target_: str = 'pytorch_lightning.DataModule'
 
 

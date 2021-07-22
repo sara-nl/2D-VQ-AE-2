@@ -24,7 +24,6 @@ class TransformCompose:
     transforms: List[TransformConf] = MISSING
 
 
-
 cs = ConfigStore.instance()
 cs.store(
     group="transforms",

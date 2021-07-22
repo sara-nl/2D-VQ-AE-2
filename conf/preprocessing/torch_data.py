@@ -1,6 +1,6 @@
 from conf.preprocessing.transforms import TransformCompose
-from typing import List
 from dataclasses import dataclass
+from abc import ABC
 
 from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
@@ -8,12 +8,8 @@ from omegaconf import MISSING
 from conf.preprocessing.transforms import TransformCompose
 
 @dataclass
-class DatasetConf:
+class DatasetConf(ABC):
     _target_: str = 'torch.utils.data.Dataset'
-    path: str = MISSING
-    transforms: TransformCompose = MISSING
-
-    train: bool = True
 
 
 @dataclass
