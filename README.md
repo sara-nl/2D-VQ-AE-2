@@ -1,6 +1,11 @@
 # 2D-VQ-AE-2
 2D Vector-Quantized Auto-Encoder for compression of Whole-Slide Images in Histopathology
 
+# How to run
+```python
+python train.py train_datamodule.train_dataloader_conf.dataset.path=<camelyon_path> train_datamodule.val_dataloader_conf.dataset.path=<camelyon_path>
+```
+
 ## Research
 If this repository has helped you in your research we would value to be acknowledged in your publication.
 
