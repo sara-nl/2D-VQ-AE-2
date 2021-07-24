@@ -24,7 +24,7 @@ def _eval_metrics_log_dict(orig, pred):
     }
 
 
-@dataclass
+@dataclass(eq=False)
 class VQAE(pl.LightningModule):
 
     # first in line is the default
@@ -37,8 +37,6 @@ class VQAE(pl.LightningModule):
 
     def __post_init__(self):
         super().__init__()
-
-        self.save_hyperparameters()
 
         self.input_conv = nn.Conv2d(self.input_channels, self.base_network_channels, kernel_size=1)
         self.output_conv = nn.Conv2d(self.base_network_channels, self.input_channels, kernel_size=1)
@@ -63,8 +61,6 @@ class VQAE(pl.LightningModule):
 
     def configure_optimizers(self):
         return instantiate(self.optim_conf, params=self.parameters())
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-4, amsgrad=True)
-        return optimizer
 
     def training_step(self, batch, batch_idx):
         breakpoint()
@@ -86,17 +82,3 @@ class VQAE(pl.LightningModule):
     #         ('input_channels', lambda x: x >= 1),
     #         ('base_network_channels', lambda x: x >= 1)
     #     )
-
-    # @classmethod
-    # def add_model_specific_args(cls, parent_parser):
-
-    #     # Model specific arguments
-    #     parser = parent_parser.add_argument_group('VQ-AE model')
-    #     parser.add_argument('--input-channels', type=int, default=1)
-    #     parser.add_argument('--base-network-channels', type=int, default=4)
-
-    #     # Optimizer specific arguments
-    #     parser = parent_parser.add_argument_group('Optimizer')
-    #     parser.add_argument('--base_lr', default=1e-5, type=float)
-
-    #     return parent_parser

@@ -12,13 +12,12 @@ def main(experiment: Experiment):
     torch.cuda.empty_cache()
 
     print(experiment)
-
     # seed everything
     # callbacks
 
-    trainer: pl.Trainer = instantiate(Experiment.trainer)
-    model: pl.LightningModule = instantiate(Experiment.model)
-    train_datamodule: pl.LightningDataModule = instantiate(Experiment.train_datamodule)
+    trainer: pl.Trainer = instantiate(experiment.trainer)
+    model: pl.LightningModule = instantiate(experiment.model)
+    train_datamodule: pl.LightningDataModule = instantiate(experiment.train_datamodule)
 
     trainer.fit(model, train_datamodule)
 
