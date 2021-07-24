@@ -11,22 +11,9 @@ class Experiment:
     trainer: TrainerConf = MISSING
     model: ModelConf = MISSING
     train_datamodule: DataModuleConf = MISSING
-    val_datamodule: Optional[DataModuleConf] = None
-
-@dataclass
-class SeedEverything:
-    _target_: str = 'pytorch_lighting.trainer.seed_everything'
-    seed: int = MISSING
-    workers: bool = True # no reason why this should be False
 
 cs = ConfigStore.instance()
 cs.store(
-    group="experiments",
     name="base_experiment",
     node=Experiment,
-)
-cs.store(
-    group="experiments",
-    name="seed_everything",
-    node=SeedEverything
 )

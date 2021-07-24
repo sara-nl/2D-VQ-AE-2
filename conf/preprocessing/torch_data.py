@@ -29,12 +29,12 @@ class DataloaderConf:
 
 cs = ConfigStore.instance()
 cs.store(
-    group="torch_utils_data",
+    group="dataloader",
     name='train_dataloader',
     node=DataloaderConf,
 )
 cs.store(
-    group="torch",
+    group="dataloader",
     name='val_dataloader',
     node=DataloaderConf(shuffle=False, persistent_workers=False),
 )

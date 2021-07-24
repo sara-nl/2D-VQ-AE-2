@@ -46,7 +46,7 @@ class CAMELYON16DataModuleConf(DataModuleConf):
 
 cs = ConfigStore.instance()
 cs.store(
-    group="preprocessing",
+    group="train_datamodule",
     name="camelyon16_datamodule",
     node=CAMELYON16DataModuleConf,
 )

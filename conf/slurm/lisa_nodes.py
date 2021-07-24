@@ -10,6 +10,7 @@ class GPU_TitanRTX(SlurmQueueConf):
     partition: str = 'gpu_titanrtx'
     cpus_per_task: int = 6
     ntasks_per_node: int = 4
+    gpus_per_node: int = 4
 
 @dataclass
 class GPU_TitanRTX_Shared(SlurmQueueConf):
@@ -17,6 +18,7 @@ class GPU_TitanRTX_Shared(SlurmQueueConf):
     partition: str = 'gpu_titanrtx_shared'
     cpus_per_task: int = 6
     ntasks_per_node: int = 1
+    gpus_per_node: int = 1
 
 @dataclass
 class GPU_RTX2080Ti(SlurmQueueConf):
@@ -24,6 +26,8 @@ class GPU_RTX2080Ti(SlurmQueueConf):
     partition: str = 'gpu_rtx2080ti'
     cpus_per_task: int = 6
     ntasks_per_node: int = 4
+    gpus_per_node: int = 4
+
 
 @dataclass
 class GPU_RTX2080Ti_Shared(SlurmQueueConf):
@@ -31,6 +35,7 @@ class GPU_RTX2080Ti_Shared(SlurmQueueConf):
     partition: str = 'gpu_rtx2080ti_shared'
     cpus_per_task: int = 6
     ntasks_per_node: int = 1
+    gpus_per_node: int = 1
 
 
 for node in (
