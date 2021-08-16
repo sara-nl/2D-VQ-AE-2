@@ -1,0 +1,4 @@
+defaults:
+  - transforms: ???
+
+_target_: 'albumentations.Compose'

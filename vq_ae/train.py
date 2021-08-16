@@ -4,14 +4,16 @@ import pytorch_lightning as pl
 import hydra
 from hydra.utils import instantiate  # for creating objects
 from hydra.utils import call  # for calling functions
+from omegaconf import OmegaConf
 
-from conf.experiment.experiment import Experiment
+# from conf.experiment.experiment import Experiment
 
-@hydra.main(config_path="../conf", config_name="train_vqae")
-def main(experiment: Experiment):
+@hydra.main(config_path="../conf_yaml", config_name="config")
+def main(experiment):
     torch.cuda.empty_cache()
+    
+    print(f"found config: {OmegaConf.to_yaml(experiment)}")
 
-    print(experiment)
     # seed everything
     # callbacks
 

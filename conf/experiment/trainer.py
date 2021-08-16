@@ -9,7 +9,7 @@ from conf.pytorch_lightning.abstacts import TrainerConf
 @dataclass
 class DDPGPUTrainer(TrainerConf):
     gpus: str = "-1"
-    distributed_backend: str = "ddp"
+    accelerator: str = "ddp"
 
     benchmark: bool = True
 
@@ -31,14 +31,14 @@ class SeedEverything:
     workers: bool = True # no reason why this should be False
 
 
-cs = ConfigStore.instance()
-cs.store(
-    group='trainer',
-    name="ddp_trainer",
-    node=DDPGPUTrainer,
-)
-cs.store(
-    group="trainer/options",
-    name="seed_everything",
-    node=SeedEverything
-)
+# cs = ConfigStore.instance()
+# cs.store(
+#     group='trainer',
+#     name="ddp_trainer",
+#     node=DDPGPUTrainer,
+# )
+# cs.store(
+#     group="trainer/options",
+#     name="seed_everything",
+#     node=SeedEverything
+# )

@@ -1,5 +1,5 @@
-from typing import List
-from dataclasses import dataclass
+from typing import Any, List
+from dataclasses import dataclass, field
 from abc import ABC
 
 from hydra.core.config_store import ConfigStore
@@ -12,26 +12,26 @@ class TransformConf(ABC):
 
 
 @dataclass
-class RandomAugment:
+class Compose(TransformConf):
+    _target_: str = 'albumentations.Compose'
+    transforms: List[TransformConf] = field(default_factory=list)
+
+
+@dataclass
+class RandomAugment(TransformConf):
     _target_: str = 'albumentations.RandomCrop'
     width: int = MISSING
     height: int = MISSING
 
 
-@dataclass
-class TransformCompose:
-    _target_: str = 'albumentations.Compose'
-    transforms: List[TransformConf] = MISSING
-
-
-cs = ConfigStore.instance()
-cs.store(
-    group="transforms",
-    name="compose",
-    node=TransformCompose,
-)
-cs.store(
-    group="transforms",
-    name="random_augment",
-    node=RandomAugment,
-)
+# cs = ConfigStore.instance()
+# cs.store(
+#     group="transforms",
+#     name="compose",
+#     node=Compose,
+# )
+# cs.store(
+#     group="transforms",
+#     name="random_augment",
+#     node=RandomAugment,
+# )

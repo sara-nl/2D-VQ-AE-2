@@ -19,9 +19,9 @@ class AdamConf(OptimizerConf):
     weight_decay: float = 0
     amsgrad: bool = False
 
-cs = ConfigStore.instance()
-cs.store(
-    group='optim',
-    name='adam',
-    node=AdamConf
-)
+# cs = ConfigStore.instance()
+# cs.store(
+#     group='optim',
+#     name='adam',
+#     node=AdamConf
+# )

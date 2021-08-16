@@ -1,0 +1,3 @@
+pad:
+  _target_: 'albumentations.Pad'
+  size: ???

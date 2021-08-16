@@ -1,0 +1,12 @@
+defaults:
+  - dataset: ???
+
+_target_: 'torch.utils.data.DataLoader'
+
+batch_size: 32
+shuffle: True
+num_workers: 6
+pin_memory: True
+drop_last: True
+prefetch_factor: 2
+persistent_workers: False

@@ -1,3 +1,4 @@
+from conf.preprocessing.transforms import TransformConf
 from typing import Callable, Sequence, Tuple, Optional
 from dataclasses import dataclass
 from pathlib import Path
@@ -8,9 +9,10 @@ import pytorch_lightning as pl
 from hydra.utils import instantiate
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
+from omegaconf import DictConfig, ListConfig
 
 from wsi_io.imagereader import ImageReader
-from conf.preprocessing.datamodule import CAMELYON16DataloaderConf
+from conf.preprocessing.camelyon16 import CAMELYON16DataloaderConf
 from utils.train_helpers import Stage
 
 
@@ -41,8 +43,8 @@ class CAMELYON16RandomPatchDataSet(Dataset):
     spacing_tolerance: float
     patch_size: Tuple[int, int]
     n_patches_per_wsi: int
-    transforms: Optional[Callable]
-    train: Stage
+    transforms: Optional[TransformConf]
+    train: str
     train_frac: float
 
     def __post_init__(self):
@@ -55,7 +57,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
             This function is obviously extremely overengineered.
             '''
-            assert self.train in [Stage.TRAIN, Stage.VALIDATION]
+            assert self.train in ('train', 'validation')
 
             paths = list(map(self._find_image_mask_pairs_paths, scan_types))
             for i, path in enumerate(paths):
@@ -77,6 +79,11 @@ class CAMELYON16RandomPatchDataSet(Dataset):
             if self.train is Stage.TEST
             else merge_scan_paths('normal', 'tumor')
         )
+
+        self.transforms = instantiate({
+            key: list(value.values()) if isinstance(value, DictConfig) else value
+            for key, value in self.transforms.items()
+        })
 
         self.n_wsi = len(self.image_paths)
         self._length = self.n_wsi * self.n_patches_per_wsi
@@ -145,7 +152,8 @@ class CAMELYON16RandomPatchDataSet(Dataset):
         mask = ImageReader(self.mask_paths[wsi_index], self.spacing_tolerance)
 
         patch = self.__cascade_sampler(image, mask)
-        return patch if self.transforms is None else self.transforms(patch)
+
+        return patch if self.transforms is None else self.transforms(image=patch)['image']
 
     def __len__(self) -> int:
         return self._length

@@ -1,0 +1,2 @@
+to_tensor_v2:
+  _target_: albumentations.pytorch.transforms.ToTensorV2

@@ -1,0 +1,4 @@
+random_crop:
+  _target_: albumentations.RandomCrop
+  width: ???
+  height: ???

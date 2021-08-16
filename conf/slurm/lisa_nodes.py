@@ -38,15 +38,15 @@ class GPU_RTX2080Ti_Shared(SlurmQueueConf):
     gpus_per_node: int = 1
 
 
-for node in (
-    GPU_TitanRTX,
-    GPU_TitanRTX_Shared,
-    GPU_RTX2080Ti,
-    GPU_RTX2080Ti_Shared
-):
-    ConfigStore.instance().store(
-        group="hydra/launcher",
-        name=node.partition,
-        node=node,
-        provider="submitit_launcher",
-    )
+# for node in (
+#     GPU_TitanRTX,
+#     GPU_TitanRTX_Shared,
+#     GPU_RTX2080Ti,
+#     GPU_RTX2080Ti_Shared
+# ):
+#     ConfigStore.instance().store(
+#         group="hydra/launcher",
+#         name=node.partition,
+#         node=node,
+#         provider="submitit_launcher",
+#     )

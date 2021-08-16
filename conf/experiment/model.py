@@ -16,9 +16,9 @@ class VQAE(ModelConf):
     input_channels: int = 1
     base_network_channels: int = 4
 
-cs = ConfigStore.instance()
-cs.store(
-    group='model',
-    name='vq_ae',
-    node=VQAE
-)
+# cs = ConfigStore.instance()
+# cs.store(
+#     group='model',
+#     name='vq_ae',
+#     node=VQAE
+# )

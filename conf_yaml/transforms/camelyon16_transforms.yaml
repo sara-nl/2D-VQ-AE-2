@@ -1,0 +1,11 @@
+defaults:
+  - transforms:
+    - random_crop
+    - to_tensor_v2
+
+_target_: 'albumentations.Compose'
+
+transforms:
+  random_crop:
+    width: 128
+    height: 128

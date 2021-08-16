@@ -24,15 +24,15 @@ def _eval_metrics_log_dict(orig, pred):
     }
 
 
-@dataclass(eq=False)
+@dataclass(eq=False) # without eq=False dataclass is not hashable
 class VQAE(pl.LightningModule):
 
     # first in line is the default
-    optim_conf: OptimizerConf = MISSING
+    optim_conf: OptimizerConf
 
-    num_layers: int = MISSING
-    input_channels: int = MISSING
-    base_network_channels: int = MISSING
+    num_layers: int
+    input_channels: int
+    base_network_channels: int
 
 
     def __post_init__(self):

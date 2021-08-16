@@ -1,0 +1,9 @@
+defaults:
+  - /optim@optim_conf: adam
+
+_target_: 'vq_ae.model.VQAE'
+_recursive_: False # we init the optim locally
+
+num_layers: 5
+input_channels: 1
+base_network_channels: 4

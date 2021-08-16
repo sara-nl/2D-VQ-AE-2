@@ -1,11 +1,10 @@
-from conf.preprocessing.transforms import TransformCompose
-from dataclasses import dataclass
+from typing import List, Any
+from dataclasses import dataclass, field
 from abc import ABC
 
 from hydra.core.config_store import ConfigStore
 from omegaconf import MISSING
 
-from conf.preprocessing.transforms import TransformCompose
 
 @dataclass
 class DatasetConf(ABC):
@@ -27,16 +26,16 @@ class DataloaderConf:
     persistent_workers: bool = True
 
 
-cs = ConfigStore.instance()
-cs.store(
-    group="dataloader",
-    name='train_dataloader',
-    node=DataloaderConf,
-)
-cs.store(
-    group="dataloader",
-    name='val_dataloader',
-    node=DataloaderConf(shuffle=False, persistent_workers=False),
-)
+# cs = ConfigStore.instance()
+# cs.store(
+#     group="dataloader",
+#     name='train_dataloader',
+#     node=DataloaderConf,
+# )
+# cs.store(
+#     group="dataloader",
+#     name='val_dataloader',
+#     node=DataloaderConf(shuffle=False, persistent_workers=False),
+# )
 
 
