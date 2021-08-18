@@ -1,4 +1,4 @@
-from typing import List, Union, Any
+from typing import Union, Any
 
 from hydra.utils import instantiate
 from omegaconf import DictConfig, ListConfig
@@ -7,7 +7,8 @@ def instantiate_nested_conf(**nested_conf):
     '''
     Warning:
     set _recursive_: False
-    at the same level as `_target_` inside your config!
+    at the same level as `_target_: utils.conf_helpers.instantiate_nested_conf`
+    inside your config!
     '''
     de_nested = listify_nested_conf(nested_conf)
 
@@ -23,7 +24,7 @@ def listify_nested_conf(conf: Any) -> Union[DictConfig, ListConfig]:
     '''
     Given the keys and values of a nested config,
     removes keys and makes their corresponding value a ListConfig,
-    if the nest level contains only one key.
+    if the nest level doesn't contain the key `_target_`.
 
     Example input:
     ```
