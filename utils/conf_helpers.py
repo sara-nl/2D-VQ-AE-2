@@ -6,7 +6,7 @@ from omegaconf import DictConfig, ListConfig
 def instantiate_nested_conf(**nested_conf):
     '''
     Warning:
-    set _recursive_: False
+    set `_recursive_: False`
     at the same level as `_target_: utils.conf_helpers.instantiate_nested_conf`
     inside your config!
     '''

@@ -3,6 +3,7 @@ _target_: pytorch_lightning.Trainer
 
 gpus: "-1"
 accelerator: ddp
+replace_sampler_ddp: True
 
 benchmark: True
 
