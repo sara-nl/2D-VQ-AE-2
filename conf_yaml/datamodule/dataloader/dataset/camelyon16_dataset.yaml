@@ -2,7 +2,6 @@ defaults:
   - /transforms@transforms: camelyon16_transforms
 
 _target_: datamodules.camelyon16.CAMELYON16RandomPatchDataSet
-_recursive_: False
 
 path: /project/robertsc/examode/CAMELYON16
 

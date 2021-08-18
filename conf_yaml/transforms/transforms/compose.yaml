@@ -1,0 +1,5 @@
+defaults:
+  - /transforms/transforms@compose.transforms: ??? # must be dict or list
+
+compose:
+  _target_: 'albumentations.Compose'

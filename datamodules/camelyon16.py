@@ -1,5 +1,4 @@
-from conf.preprocessing.transforms import TransformConf
-from typing import Callable, Sequence, Tuple, Optional
+from typing import Sequence, Tuple, Optional
 from dataclasses import dataclass
 from pathlib import Path
 from itertools import chain, zip_longest
@@ -9,11 +8,10 @@ import pytorch_lightning as pl
 from hydra.utils import instantiate
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
-from omegaconf import DictConfig, ListConfig
+from albumentations import BasicTransform
 
 from wsi_io.imagereader import ImageReader
 from conf.preprocessing.camelyon16 import CAMELYON16DataloaderConf
-from utils.train_helpers import Stage
 
 
 @dataclass
@@ -43,7 +41,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
     spacing_tolerance: float
     patch_size: Tuple[int, int]
     n_patches_per_wsi: int
-    transforms: Optional[TransformConf]
+    transforms: Optional[BasicTransform]
     train: str
     train_frac: float
 
@@ -64,7 +62,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
                 length, frac = (ln := len(path[0])), round(ln*self.train_frac)
                 paths[i] = [
-                    elem[(slice(frac) if self.train is Stage.TRAIN else slice(frac, length))]
+                    elem[(slice(frac) if self.train is 'train' else slice(frac, length))]
                     for elem in path
                 ]
 
@@ -76,14 +74,9 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
         self.image_paths, self.mask_paths = (
             self.__find_image_mask_pairs_paths(pattern='test')
-            if self.train is Stage.TEST
+            if self.train is 'test'
             else merge_scan_paths('normal', 'tumor')
         )
-
-        self.transforms = instantiate({
-            key: list(value.values()) if isinstance(value, DictConfig) else value
-            for key, value in self.transforms.items()
-        })
 
         self.n_wsi = len(self.image_paths)
         self._length = self.n_wsi * self.n_patches_per_wsi

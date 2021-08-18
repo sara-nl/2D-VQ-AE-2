@@ -1,11 +1,14 @@
 defaults:
-  - transforms:
+  - transforms/compose@_here_ # inserts the compose config at the current root node
+  - override transforms@compose.transforms: # without the @_here_, we would have to write transforms@transforms.compose.transforms
     - random_crop
     - to_tensor_v2
 
-_target_: 'albumentations.Compose'
+_target_: utils.conf_helpers.instantiate_nested_conf
+_recursive_: False # required for the function above
 
-transforms:
-  random_crop:
-    width: 128
-    height: 128
+compose:
+  transforms:
+    random_crop:
+      width: 128
+      height: 128
