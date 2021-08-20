@@ -62,7 +62,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
                 length, frac = (ln := len(path[0])), round(ln*self.train_frac)
                 paths[i] = [
-                    elem[(slice(frac) if self.train is 'train' else slice(frac, length))]
+                    elem[(slice(frac) if self.train == 'train' else slice(frac, length))]
                     for elem in path
                 ]
 
@@ -74,7 +74,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
         self.image_paths, self.mask_paths = (
             self.__find_image_mask_pairs_paths(pattern='test')
-            if self.train is 'test'
+            if self.train == 'test'
             else merge_scan_paths('normal', 'tumor')
         )
 
@@ -141,8 +141,10 @@ class CAMELYON16RandomPatchDataSet(Dataset):
     def __getitem__(self, index: int) -> np.array:
         wsi_index = index % self.n_wsi
 
-        image = ImageReader(self.image_paths[wsi_index], self.spacing_tolerance)
-        mask = ImageReader(self.mask_paths[wsi_index], self.spacing_tolerance)
+        image, mask = (
+            ImageReader(modality_paths[wsi_index], self.spacing_tolerance)
+            for modality_paths in (self.image_paths, self.mask_paths)
+        )
 
         patch = self.__cascade_sampler(image, mask)
 
