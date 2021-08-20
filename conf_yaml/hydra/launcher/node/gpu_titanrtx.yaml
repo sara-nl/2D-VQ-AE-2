@@ -1,0 +1,5 @@
+timeout_min: 300 # 5 days
+partition: 'gpu_titanrtx'
+cpus_per_task: 6
+tasks_per_node: 4
+gpus_per_node: 4

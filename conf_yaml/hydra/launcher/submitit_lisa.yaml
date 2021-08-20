@@ -1,0 +1,5 @@
+# @package _global_.hydra.launcher
+
+defaults:
+  - submitit_slurm
+  - node@_here_: gpu_titanrtx_shared

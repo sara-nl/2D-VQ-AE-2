@@ -21,3 +21,7 @@ compose:
           - 0.2419
           - 0.3083
           - 0.1741
+      # gaussian_blur: # values taken from Witali
+      #   sigma_limit:
+      #     - 0
+      #     - 1

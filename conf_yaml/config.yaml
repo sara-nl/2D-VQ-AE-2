@@ -3,3 +3,4 @@ defaults:
   - trainer: ddp_trainer
   - model: vq_ae
   - datamodule@train_datamodule: camelyon16_datamodule
+  - override hydra/launcher: submitit_lisa

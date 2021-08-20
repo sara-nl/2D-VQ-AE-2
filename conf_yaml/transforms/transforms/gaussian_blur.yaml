@@ -1,0 +1,6 @@
+gaussian_blur:
+  _target_: 'albumentations.GausianBlur'
+  blur_limit:
+    - 3
+    - 7
+  sigma_limit: 0
