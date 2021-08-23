@@ -11,15 +11,15 @@ from torch.utils.data.dataloader import DataLoader
 from albumentations import BasicTransform
 
 from wsi_io.imagereader import ImageReader
-from conf.preprocessing.camelyon16 import CAMELYON16DataloaderConf
+from utils.conf_helpers import DataloaderConf
 
 
 @dataclass
-class CAMELYON16DataModule(pl.LightningDataModule):
+class DefaultDataModule(pl.LightningDataModule):
 
-    train_dataloader_conf: CAMELYON16DataloaderConf
-    val_dataloader_conf: CAMELYON16DataloaderConf
-    test_dataloader_conf: Optional[CAMELYON16DataloaderConf] = None
+    train_dataloader_conf: DataloaderConf
+    val_dataloader_conf: DataloaderConf
+    test_dataloader_conf: Optional[DataloaderConf] = None
 
     def __post_init__(self):
         super().__init__()

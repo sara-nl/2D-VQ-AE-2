@@ -8,7 +8,7 @@ from torch import nn
 from omegaconf import MISSING
 from hydra.utils import instantiate
 
-from conf.experiment.optimizer import OptimizerConf
+from utils.conf_helpers import OptimizerConf
 
 
 @torch.no_grad()

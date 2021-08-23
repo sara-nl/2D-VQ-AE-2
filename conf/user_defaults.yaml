@@ -1,3 +1,0 @@
-# @package _global_
-
-train_datamodule.train_dataloader_conf.dataset.path: /home/project/examode/CAMELYON16

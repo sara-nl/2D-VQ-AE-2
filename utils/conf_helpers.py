@@ -1,7 +1,33 @@
 from typing import Union, Any
+from dataclasses import dataclass
+from abc import ABC
 
 from hydra.utils import instantiate
-from omegaconf import DictConfig, ListConfig
+from omegaconf import DictConfig, ListConfig, MISSING
+
+
+@dataclass
+class DatasetConf(ABC):
+    _target_: str = 'torch.utils.data.Dataset'
+
+@dataclass
+class DataloaderConf:
+    _target_: str = 'torch.utils.data.DataLoader'
+
+    dataset: DatasetConf = MISSING
+
+    batch_size: int = 32
+    shuffle: bool = True
+    num_workers: int = 6
+    pin_memory: bool = True
+    drop_last: bool = True
+    prefetch_factor: int = 2
+    persistent_workers: bool = True
+
+@dataclass
+class OptimizerConf(ABC):
+    _target_: str = 'torch.optim.Optimizer'
+
 
 def instantiate_nested_conf(**nested_conf):
     '''
@@ -19,6 +45,7 @@ def instantiate_nested_conf(**nested_conf):
             raise RuntimeError("This shouldn't happen")
 
     return instantiate(de_nested)
+
 
 def listify_nested_conf(conf: Any) -> Union[DictConfig, ListConfig]:
     '''
@@ -65,6 +92,8 @@ def listify_nested_conf(conf: Any) -> Union[DictConfig, ListConfig]:
         ])
     else:
         return conf
+
+
 
 
 if __name__ == '__main__':

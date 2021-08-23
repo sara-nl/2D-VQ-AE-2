@@ -2,13 +2,11 @@
 import torch
 import pytorch_lightning as pl
 import hydra
-from hydra.utils import instantiate  # for creating objects
-from hydra.utils import call  # for calling functions
+from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
-# from conf.experiment.experiment import Experiment
 
-@hydra.main(config_path="../conf_yaml", config_name="config")
+@hydra.main(config_path="../conf", config_name="config")
 def main(experiment):
     torch.cuda.empty_cache()
     
