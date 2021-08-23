@@ -28,6 +28,11 @@ class DataloaderConf:
 class OptimizerConf(ABC):
     _target_: str = 'torch.optim.Optimizer'
 
+@dataclass
+class LossFConf(ABC):
+    _target_: str = 'torch.nn.Module'
+
+
 
 def instantiate_nested_conf(**nested_conf):
     '''

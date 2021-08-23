@@ -8,7 +8,7 @@ from torch import nn
 from omegaconf import MISSING
 from hydra.utils import instantiate
 
-from utils.conf_helpers import OptimizerConf
+from utils.conf_helpers import LossFConf, OptimizerConf
 
 
 @torch.no_grad()
@@ -27,8 +27,9 @@ def _eval_metrics_log_dict(orig, pred):
 @dataclass(eq=False) # without eq=False dataclass is not hashable
 class VQAE(pl.LightningModule):
 
-    # first in line is the default
+    # Optimizer needs runtime self.parameters(), so need to pass conf objects
     optim_conf: OptimizerConf
+    loss_f_conf: LossFConf
 
     num_layers: int
     input_channels: int
@@ -37,6 +38,8 @@ class VQAE(pl.LightningModule):
 
     def __post_init__(self):
         super().__init__()
+
+        self.loss_f = instantiate(self.loss_f_conf)
 
         self.input_conv = nn.Conv2d(self.input_channels, self.base_network_channels, kernel_size=1)
         self.output_conv = nn.Conv2d(self.base_network_channels, self.input_channels, kernel_size=1)

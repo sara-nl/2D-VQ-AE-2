@@ -1,5 +1,6 @@
 defaults:
   - /optim@optim_conf: adam
+  - /loss_f@loss_f_conf: huber
 
 _target_: 'vq_ae.model.VQAE'
 _recursive_: False # we init the optim locally
