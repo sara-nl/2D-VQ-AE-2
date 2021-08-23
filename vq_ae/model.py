@@ -1,27 +1,10 @@
 from dataclasses import dataclass
-from functools import partial
-from argparse import Namespace
 
-import torch
 import pytorch_lightning as pl
 from torch import nn
-from omegaconf import MISSING
 from hydra.utils import instantiate
 
 from utils.conf_helpers import LossFConf, OptimizerConf
-
-
-@torch.no_grad()
-def _eval_metrics_log_dict(orig, pred):
-    # FIXME: remove hardcoded data range
-    metrics = (
-        ('nmse', nmse),
-        ('psnr', partial(psnr, data_range=4)),
-    )
-    return {
-        func_name: func(orig, pred)
-        for func_name, func in metrics
-    }
 
 
 @dataclass(eq=False) # without eq=False dataclass is not hashable
