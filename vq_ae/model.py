@@ -1,55 +1,47 @@
-from dataclasses import dataclass
+from typing import Any, Union, Optional, Tuple, Sequence # Sequence deprecated from python 3.9+
 
+import torch
 import pytorch_lightning as pl
 from torch import nn
 from hydra.utils import instantiate
 
-from utils.conf_helpers import LossFConf, OptimizerConf
+from utils.conf_helpers import ModuleConf, OptimizerConf, ModuleConf
 
 
-@dataclass(eq=False) # without eq=False dataclass is not hashable
 class VQAE(pl.LightningModule):
 
     # Optimizer needs runtime self.parameters(), so need to pass conf objects
-    optim_conf: OptimizerConf
-    loss_f_conf: LossFConf
-
-    num_layers: int
-    input_channels: int
-    base_network_channels: int
-
-
-    def __post_init__(self):
+    def __init__(
+        self,
+        optim_conf: OptimizerConf,
+        loss_f_conf: ModuleConf,
+        encoder_conf: ModuleConf,
+        decoder_conf: ModuleConf
+    ):
         super().__init__()
 
-        self.loss_f = instantiate(self.loss_f_conf)
+        self.optim_conf = optim_conf
 
-        self.input_conv = nn.Conv2d(self.input_channels, self.base_network_channels, kernel_size=1)
-        self.output_conv = nn.Conv2d(self.base_network_channels, self.input_channels, kernel_size=1)
+        # init rest of the configs
+        for attr_name, attr_conf in (
+            # optim_conf not present
+            ('loss_f', loss_f_conf),
+            ('encoder', encoder_conf),
+            ('decoder', decoder_conf)
+        ):
+            setattr(self, attr_name, instantiate(attr_conf))
+
 
     def forward(self, data):
-        x = data
+        encodings, *_, encoding_loss = self.encoder(data)
+        out = self.decoder(encodings)
 
-        x = self.input_conv(x)
-        x = self.output_conv(x)
-
-        return x
-        # encoded = self.encode(data)
-        # decoded = self.decode(encoded)
-
-        # return decoded
-
-    def encode(self, data):
-        pass
-
-    def decode(self, quantizations):
-        pass
+        return out, encoding_loss
 
     def configure_optimizers(self):
         return instantiate(self.optim_conf, params=self.parameters())
 
     def training_step(self, batch, batch_idx):
-        breakpoint()
         return self.shared_step(batch, batch_idx, mode='train')
 
     def validation_step(self, batch, batch_idx):
@@ -58,13 +50,184 @@ class VQAE(pl.LightningModule):
     def shared_step(self, batch, batch_idx, mode='train'):
         assert mode in ('train', 'val')
 
-    # def huber(self, batch, batch_idx) -> Tuple[torch.Tensor, dict]:
-    #     return self.loc_metric(batch, batch_idx, F.smooth_l1_loss)
+        out, encoding_loss = self.forward(batch)
 
-    # def _parse_input_args(self, args: Namespace) -> None:
-    #     attr_setter_(
-    #         self,
-    #         args,
-    #         ('input_channels', lambda x: x >= 1),
-    #         ('base_network_channels', lambda x: x >= 1)
-    #     )
+        loss = self.loss_f(input=out, target=batch)
+
+        return loss + sum(encoding_loss)
+
+
+class Encoder(nn.Module):
+    def __init__(
+        self,
+        stem_conf: ModuleConf,
+        down_block_conf: Union[ModuleConf, Sequence[ModuleConf]],
+        n_pre_enc_layers: Union[int, Sequence[int]],
+        vq_conf: Sequence[ModuleConf],
+        conv_block_conf: ModuleConf,
+        shortcut_block_conf: Optional[Union[ModuleConf, Sequence[ModuleConf]]],
+    ):
+        super().__init__()
+
+        self.in_stem = instantiate(stem_conf)
+        vq_layers = instantiate(vq_conf)
+
+        n_pre_enc_layers, down_block_conf, shortcut_block_conf = (
+            maybe_repeat_layer(n_pre_enc_layers, len(vq_layers)),
+            maybe_repeat_layer(down_block_conf, len(vq_layers)),
+            maybe_repeat_layer(shortcut_block_conf, len(vq_layers)-1)
+        )
+
+        pre_enc_conf = [[{**conv_block_conf, **{'mode':'same'}}] * n_pre_enc for n_pre_enc in n_pre_enc_layers]
+
+
+        down_layers, pre_enc_layers, shortcut_layers = ([] for _ in range(3))
+
+        current_in = self.in_stem.out_channels
+        for down_layer, pre_enc_layer, shortcut_layer in zip(
+            down_block_conf,
+            pre_enc_conf,
+            (None, *shortcut_block_conf) # prepend None to fix shortcut channel size
+        ):
+
+            down_block = instantiate(down_layer, in_channels=current_in)
+            down_layers.append(down_block)
+            current_in = down_block.out_channels
+
+            shortcut_layers.append(
+                instantiate(shortcut_layer, in_channels=current_in)
+                if shortcut_layer is not None else None
+            )
+
+            pre_enc_layers.append(nn.Sequential(*(
+                instantiate(layer, in_channels=current_in, out_channels=current_in)
+                for layer in pre_enc_layer
+            )))
+
+        # delete prepended None & append a None so we can easily zip in forward
+        del shortcut_layers[0]
+        shortcut_layers.append(None)
+
+        self.down_layers = nn.ModuleList(down_layers)
+        self.pre_enc_layers, self.shortcut_layers = (
+            nn.ModuleList(reversed(layer)) for layer in (
+                pre_enc_layers, shortcut_layers
+            )
+        )
+        self.vq_layers = nn.ModuleList(reversed(vq_layers))
+
+
+    def forward(self, x: torch.Tensor) -> Tuple[ # completely dependent on VQ-layer output
+            Sequence[torch.Tensor], # encodings
+            Sequence[torch.Tensor], # encoding indices
+            Sequence[torch.Tensor], # encoding loss
+        ]:
+
+        # Warning: outputs are in order of low-res to high-res!
+        # (because of performance reasons)
+
+        down = self.in_stem(x)
+        downsampled = reversed([(down := down_layer(down)) for down_layer in self.down_layers])
+
+        # tuple to have nice output type
+        # zip(*) to get (enc, *_, loss) each in their own sequence
+        out = tuple(zip(*(
+            # since the last element of self.shortcut_layers is always None,
+            # first iteration is always skipped,
+            # and aux is always defined in the local scope of the next iteration.
+            # walrus operator doesn't support tuple unpacking, so need to do aux[0]
+            (aux := enc(pre_enc(down + (shortcut(aux[0]) if shortcut is not None else 0)))) # type: ignore
+            for down, pre_enc, enc, shortcut in zip(
+                downsampled,
+                self.pre_enc_layers,
+                self.vq_layers,
+                self.shortcut_layers,
+            )
+        )))
+
+        return out
+
+
+class Decoder(nn.Module):
+    def __init__(
+        self,
+        n_enc_layers: int, # TODO: find a way to remove this param
+        stem_conf: ModuleConf,
+        up_block_conf: Union[ModuleConf, Sequence[ModuleConf]],
+        n_post_enc_layers: Union[int, Sequence[int]],
+        conv_block_conf: ModuleConf,
+        shortcut_block_conf: Optional[Union[ModuleConf, Sequence[ModuleConf]]]
+    ):
+        super().__init__()
+
+        self.out_stem = instantiate(stem_conf)
+
+        n_post_enc_layers, up_block_conf, shortcut_block_conf = (
+            maybe_repeat_layer(n_post_enc_layers, n_enc_layers),
+            maybe_repeat_layer(up_block_conf, n_enc_layers),
+            maybe_repeat_layer(shortcut_block_conf, n_enc_layers-1)
+        )
+
+        post_enc_conf = [[{**conv_block_conf, **{'mode':'same'}}] * n_post_enc for n_post_enc in n_post_enc_layers]
+
+        up_layers, post_enc_layers, shortcut_layers = ([] for _ in range(3))
+
+        current_out = self.out_stem.in_channels
+        for up_layer, post_enc_layer, shortcut_layer in zip(
+            up_block_conf,
+            post_enc_conf,
+            (None, *shortcut_block_conf) # prepend None to fix shortcut channel size
+        ):
+            up_block = instantiate(up_layer, out_channels=current_out)
+            up_layers.append(up_block)
+            current_out = up_block.in_channels
+
+            shortcut_layers.append(
+                instantiate(shortcut_layer, out_channels=current_out)
+                if shortcut_layer is not None else None
+            )
+
+            post_enc_layers.append(nn.Sequential(*(
+                instantiate(layer, in_channels=current_out, out_channels=current_out)
+                for layer in post_enc_layer
+            )))
+
+        # delete prepended None & append a None so we can easily zip in forward
+        del shortcut_layers[0]
+        shortcut_layers.append(None)
+
+        self.up_layers, self.post_enc_layers, self.shortcut_layers = (
+            nn.ModuleList(reversed(layer)) for layer in (
+                up_layers, post_enc_layers, shortcut_layers
+            )
+        )
+
+
+
+    def forward(self, x: Sequence[torch.Tensor]):
+        # x should be from low-res to high-res
+
+        prev_up = 0
+        for enc, shortcut, post_enc, up in zip(
+            x,
+            self.shortcut_layers,
+            self.post_enc_layers,
+            self.up_layers
+        ):
+            prev_up = up(
+                prev_up + post_enc(
+                    (0 if shortcut is None else shortcut(aux))
+                    + (aux := enc) # define aux after shortcut
+                )
+            )
+
+        return self.out_stem(prev_up)
+
+
+
+def maybe_repeat_layer(layer: Union[Any, Sequence], repetitions: int) -> Sequence:
+    if not isinstance(layer, Sequence):
+        return [layer] * repetitions
+    else:
+        assert len(layer) == repetitions
+        return layer

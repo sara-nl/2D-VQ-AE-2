@@ -1,10 +1,10 @@
 defaults:
-  - transforms/compose@_here_ # inserts the compose config at the current root node
-  - override transforms@compose.transforms: # without the @_here_, we would have to write transforms@transforms.compose.transforms
+  - transforms/compose@_here_
+  - override transforms@compose.transforms:
     - normalize
     - to_tensor_v2
 
-_target_: utils.conf_helpers.instantiate_nested_conf
+_target_: utils.conf_helpers.instantiate_nested_dictconf
 _recursive_: False # required for the function above
 
 compose:
@@ -12,16 +12,16 @@ compose:
 #     random_crop:
 #       width: 128
 #       height: 128
-      normalize:  # values based on 10k patch samples
-        mean:
-          - 0.7279
-          - 0.5955
-          - 0.7762
-        std:
-          - 0.2419
-          - 0.3083
-          - 0.1741
-      # gaussian_blur: # values taken from Witali
-      #   sigma_limit:
-      #     - 0
-      #     - 1
+    normalize:  # values based on 10k patch samples
+      mean:
+        - 0.7279
+        - 0.5955
+        - 0.7762
+      std:
+        - 0.2419
+        - 0.3083
+        - 0.1741
+    # gaussian_blur: # values taken from Witali
+    #   sigma_limit:
+    #     - 0
+    #     - 1

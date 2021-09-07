@@ -1,0 +1,10 @@
+defaults:
+  - /model/layers/conv_block@conv_conf: pre_activation_fixup
+
+in_channels: null
+n_down: 2
+n_pre_layers: 1
+n_post_layers: 1
+
+_target_: vq_ae.layers.conv_block.DownBlock
+_recursive_: False

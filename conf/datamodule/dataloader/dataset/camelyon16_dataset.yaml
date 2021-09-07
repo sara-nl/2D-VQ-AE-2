@@ -11,7 +11,7 @@ train_frac: 0.95
 spacing: 0.5
 spacing_tolerance: 0.15
 patch_size:
-  - 128
-  - 128
+  - 256
+  - 256
 
 n_patches_per_wsi: 1000

@@ -1,0 +1,20 @@
+defaults:
+  - /model/layers/conv_block/conv_layer@stem_conf: same2d
+  - /model/layers/conv_block@down_block_conf: down_block
+  - /model/layers/conv_block@conv_block_conf: pre_activation_fixup
+  - /model/layers/conv_block@shortcut_block_conf: null
+  - /model/layers/vq@vq_conf.0: ema_vq
+  - /model/layers/vq@vq_conf.1: ema_vq
+
+_target_: vq_ae.model.Encoder
+_recursive_: False
+
+vq_conf:
+  _target_: utils.conf_helpers.instantiate_dictified_listconf
+  _recursive_: False
+  '0':
+    embedding_dim: 16
+  '1':
+    embedding_dim: 64
+
+shortcut_block_conf: null

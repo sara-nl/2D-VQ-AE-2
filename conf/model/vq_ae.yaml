@@ -1,10 +1,21 @@
 defaults:
-  - /optim@optim_conf: adam
-  - /loss_f@loss_f_conf: huber
+  - optim@optim_conf: adam
+  - loss_f@loss_f_conf: huber
+  - encoder@encoder_conf: default
+  - decoder@decoder_conf: default
 
 _target_: 'vq_ae.model.VQAE'
 _recursive_: False # we init the optim locally
 
-num_layers: 5
-input_channels: 1
-base_network_channels: 4
+encoder_conf:
+  stem_conf:
+    in_channels: 3
+    out_channels: 4
+  n_pre_enc_layers: 5
+
+decoder_conf:
+  n_enc_layers: 2
+  stem_conf:
+    in_channels: 4
+    out_channels: 3
+  n_post_enc_layers: 5

@@ -1,0 +1,6 @@
+defaults:
+  - conv2d
+
+kernel_size: 3
+stride: 1
+padding: 1

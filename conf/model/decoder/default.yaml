@@ -1,0 +1,13 @@
+defaults:
+  - /model/layers/conv_block/conv_layer@stem_conf: same2d
+  - /model/layers/conv_block@up_block_conf: up_block
+  - /model/layers/conv_block@conv_block_conf: pre_activation_fixup
+  - /model/layers/conv_block@shortcut_block_conf: null
+
+_target_: vq_ae.model.Decoder
+_recursive_: False
+
+n_enc_layers: ???
+n_post_enc_layers:
+  - ???
+shortcut_block_conf: null

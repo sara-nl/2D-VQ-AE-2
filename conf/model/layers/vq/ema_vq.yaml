@@ -1,0 +1,6 @@
+_target_: vq_ae.layers.vq.EMAVectorQuantizer
+num_embeddings: 256
+embedding_dim: 32
+commitment_cost: 1e-5
+decay: 0.99
+laplace_alpha: 1e-5

@@ -1,4 +1,4 @@
-from typing import Union, Any
+from typing import List, Union, Any
 from dataclasses import dataclass
 from abc import ABC
 
@@ -29,27 +29,32 @@ class OptimizerConf(ABC):
     _target_: str = 'torch.optim.Optimizer'
 
 @dataclass
-class LossFConf(ABC):
+class ModuleConf(ABC):
     _target_: str = 'torch.nn.Module'
 
 
+def instantiate_nested_dictconf(**nested_conf) -> Any:
+    listified_obj = instantiate_dictified_listconf(**nested_conf)
 
-def instantiate_nested_conf(**nested_conf):
+    assert len(listified_obj) == 1, f"more than one root object found in {listified_obj}"
+
+    return listified_obj[0]
+
+
+def instantiate_dictified_listconf(**nested_conf) -> List:
     '''
     Warning:
     set `_recursive_: False`
     at the same level as `_target_: utils.conf_helpers.instantiate_nested_conf`
     inside your config!
     '''
+
     de_nested = listify_nested_conf(nested_conf)
 
     if isinstance(de_nested, ListConfig):
-        if len(de_nested) == 1:
-            de_nested = de_nested[0]
-        else:
-            raise RuntimeError("This shouldn't happen")
+        return [instantiate(elem) for elem in de_nested]
 
-    return instantiate(de_nested)
+    return [instantiate(de_nested)]
 
 
 def listify_nested_conf(conf: Any) -> Union[DictConfig, ListConfig]:

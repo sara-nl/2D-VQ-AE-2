@@ -1,0 +1,76 @@
+defaults:
+  - activation: elu
+
+  - conv_layer@conv_conf.down.branch_conv1: proj2d
+  - conv_layer@conv_conf.down.branch_conv2: down2d
+  - conv_layer@conv_conf.down.branch_conv3: proj2d
+  - conv_layer@conv_conf.down.skip_conv: down2d
+
+  - conv_layer@conv_conf.up.branch_conv1: proj2d
+  - conv_layer@conv_conf.up.branch_conv2: up2d
+  - conv_layer@conv_conf.up.branch_conv3: proj2d
+  - conv_layer@conv_conf.up.skip_conv: up2d
+
+  - conv_layer@conv_conf.same.branch_conv1: proj2d
+  - conv_layer@conv_conf.same.branch_conv2: same2d
+  - conv_layer@conv_conf.same.branch_conv3: proj2d
+  - conv_layer@conv_conf.same.skip_conv: proj2d
+
+  - conv_layer@conv_conf.out.branch_conv1: proj2d
+  - conv_layer@conv_conf.out.branch_conv2: out2d
+  - conv_layer@conv_conf.out.branch_conv3: proj2d
+  - conv_layer@conv_conf.out.skip_conv: out2d
+
+_target_: 'vq_ae.layers.conv_block.PreActFixupResBlock'
+_recursive_: False
+
+in_channels: null
+out_channels: null
+mode: null
+
+bottleneck_divisor: 4
+
+conv_conf:
+  down:
+    branch_conv1:
+      bias: False
+    branch_conv2:
+      bias: False
+      padding_mode: 'circular'
+    branch_conv3:
+      bias: False
+    skip_conv:
+      bias: False
+      padding_mode: 'circular'
+  up:
+    branch_conv1:
+      bias: False
+    branch_conv2:
+      bias: False
+    branch_conv3:
+      bias: False
+    skip_conv:
+      bias: False
+  same:
+    branch_conv1:
+      bias: False
+    branch_conv2:
+      bias: False
+      padding_mode: 'circular'
+    branch_conv3:
+      bias: False
+    skip_conv:
+      bias: False
+  out:
+    branch_conv1:
+      bias: False
+    branch_conv2:
+      bias: False
+      padding_mode: 'circular'
+    branch_conv3:
+      bias: False
+    skip_conv:
+      bias: False
+
+
+
