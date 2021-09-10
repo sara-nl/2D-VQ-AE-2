@@ -2,9 +2,21 @@
 2D Vector-Quantized Auto-Encoder for compression of Whole-Slide Images in Histopathology
 
 # How to run
-```python
+## Locally
+```bash
 python train.py train_datamodule.train_dataloader_conf.dataset.path=<camelyon_path> train_datamodule.val_dataloader_conf.dataset.path=<camelyon_path>
 ```
+## Lisa
+append `--multirun` to automatically submit a `sbatch` job through `submitit`.
+```bash
+python train.py <dataset-path-args> --multirun
+```
+Change node type by overwriting the node config, e.g.:
+```bash
+python train.py <dataset-path-args> hydra/launcher/node@hydra.launcher=gpu_titanrtx --multirun
+```
+
+
 
 ## Research
 If this repository has helped you in your research we would value to be acknowledged in your publication.
