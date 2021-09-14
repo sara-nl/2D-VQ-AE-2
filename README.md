@@ -7,10 +7,11 @@
 python train.py train_datamodule.train_dataloader_conf.dataset.path=<camelyon_path> train_datamodule.val_dataloader_conf.dataset.path=<camelyon_path>
 ```
 ## Lisa
-append `--multirun` to automatically submit a `sbatch` job through `submitit`.
+set `CAMELYON16_PATH`, and append `--multirun` to automatically submit a `sbatch` job through `submitit`, which copies CAMELYON16 to `$SCRATCH` of the allocated node.
 ```bash
-python train.py <dataset-path-args> --multirun
+CAMELYON16_PATH=<camelyon-path> python train.py --multirun
 ```
+
 Change node type by overwriting the node config, e.g.:
 ```bash
 python train.py <dataset-path-args> hydra/launcher/node@hydra.launcher=gpu_titanrtx --multirun
