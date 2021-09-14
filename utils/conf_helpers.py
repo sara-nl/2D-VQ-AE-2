@@ -1,9 +1,17 @@
 from typing import List, Union, Any
 from dataclasses import dataclass
 from abc import ABC
+from pathlib import Path
 
 from hydra.utils import instantiate
-from omegaconf import DictConfig, ListConfig, MISSING
+from omegaconf import OmegaConf, DictConfig, ListConfig, MISSING
+
+
+OmegaConf.register_new_resolver(
+    name="path.stem",
+    resolver= lambda path: Path(path).stem,
+    replace=True
+)
 
 
 @dataclass

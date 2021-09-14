@@ -19,6 +19,7 @@ class VQAE(pl.LightningModule):
         decoder_conf: ModuleConf
     ):
         super().__init__()
+        self.save_hyperparameters()
 
         self.optim_conf = optim_conf
 
@@ -53,6 +54,10 @@ class VQAE(pl.LightningModule):
         out, encoding_loss = self.forward(batch)
 
         loss = self.loss_f(input=out, target=batch)
+
+        self.log(f'{mode}_recon_loss', loss)
+        for i, l in enumerate(encoding_loss):
+            self.log(f'{mode}_encoding_loss_{i}', l)
 
         return loss + sum(encoding_loss)
 

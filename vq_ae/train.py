@@ -5,8 +5,10 @@ import hydra
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
+import utils.conf_helpers # import adds parsers to hydra parser
 
-@hydra.main(config_path="../conf", config_name="config")
+
+@hydra.main(config_path="../conf", config_name="camelyon16_config")
 def main(experiment):
     torch.cuda.empty_cache()
     

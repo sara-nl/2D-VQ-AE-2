@@ -10,4 +10,5 @@ _recursive_: False # To ensure dataloaders can be repeatedly init
 val_dataloader_conf:
   dataset:
     train: validation
+    path: ${train_dataloader_conf.dataset.path}
   shuffle: False

@@ -3,10 +3,10 @@ defaults:
 
 _target_: datamodules.camelyon16.CAMELYON16RandomPatchDataSet
 
-path: /project/robertsc/examode/CAMELYON16
+path: $SCRATCH/${path.stem:${oc.env:CAMELYON16_PATH}}
 
 train: train
-train_frac: 0.95
+train_frac: 0.90
 
 spacing: 0.5
 spacing_tolerance: 0.15

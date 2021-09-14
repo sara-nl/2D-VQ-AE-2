@@ -1,0 +1,15 @@
+
+defaults:
+  - trainer: ddp_trainer
+  - model: vq_ae
+  - datamodule@train_datamodule: camelyon16_datamodule
+  - override hydra/launcher: submitit_lisa
+  - override hydra/launcher/setup: camelyon16_setup
+  - _self_ 
+
+hydra:
+  job:
+    env_set:
+      HYDRA_FULL_ERROR: "1"
+    env_copy:
+      - CAMELYON16_PATH

@@ -452,12 +452,10 @@ class ImageReader(object):
         """
 
         # Check if the image is still open.
-        #
         if self.__image is None:
              raise IOError(f'image already closed')
 
         # Find the appropriate level for the pixel spacing.
-        #
         level = self.level(spacing=spacing)
 
         if normalized:
@@ -468,11 +466,10 @@ class ImageReader(object):
                 min(height, self.__shapes[level][0] - row)
             )
 
-        patch = self.__patch(int(col),
-                             int(row),
-                             int(width),
-                             int(height),
-                             level)
+        # explicitely cast to int, as e.g. int64 is not allowed
+        col, row, width, height = map(int, (col, row, width, height))
+
+        patch = self.__patch(startX=col, startY=row, width=width, height=height, level=level)
 
 
         # patch = patch.transpose(2, 0, 1)
@@ -510,23 +507,20 @@ class ImageReader(object):
         # Find the appropriate level for the pixel spacing.
         level = self.level(spacing=spacing)
 
+        col, row = (
+            center_x - width//2,
+            center_y - height//2
+        )
+
         if normalized:
             ds = int(self.__downsamplings[level])
-            center_x, center_y, width, height = (
-                center_x * ds,
-                center_y * ds,
-                width * ds,
-                height * ds
-            )
+            col, row = col * ds, row * ds
 
-        col, row = center_x - width, center_y - height
+        # explicitely cast to int, as int64 is not allowed
+        col, row, width, height = map(int, (col, row, width, height))
 
         # Extract image patch.
-        patch = self.__patch(int(col),
-                             int(row),
-                             int(width),
-                             int(height),
-                             level)
+        patch = self.__patch(startX=col, startY=row, width=width, height=height, level=level)
 
         empty = 0
 

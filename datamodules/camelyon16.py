@@ -136,7 +136,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
         discrepancy = round(spacing / target_spacing)
         idx = idx * discrepancy + rng.integers(discrepancy, size=2)
 
-        return image.read_center(target_spacing, *idx, *self.patch_size)
+        return image.read_center(target_spacing, *idx, *self.patch_size, normalized=True)
 
     def __getitem__(self, index: int) -> np.array:
         wsi_index = index % self.n_wsi
