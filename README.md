@@ -14,7 +14,7 @@ CAMELYON16_PATH=<camelyon-path> python train.py --multirun
 
 Change node type by overwriting the node config, e.g.:
 ```bash
-python train.py <dataset-path-args> hydra/launcher/node@hydra.launcher=gpu_titanrtx --multirun
+CAMELYON16_PATH=<camelyon-path> python train.py hydra/launcher/node@hydra.launcher=gpu_titanrtx --multirun
 ```
 
 
