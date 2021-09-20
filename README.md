@@ -3,8 +3,9 @@
 
 # How to run
 ## Locally
+set `CAMELYON16_PATH` and run `train.py`:
 ```bash
-python train.py train_datamodule.train_dataloader_conf.dataset.path=<camelyon_path> train_datamodule.val_dataloader_conf.dataset.path=<camelyon_path>
+CAMELYON16_PATH=<camelyon-path> python train.py
 ```
 ## Lisa
 set `CAMELYON16_PATH`, and append `--multirun` to automatically submit a `sbatch` job through `submitit`, which copies CAMELYON16 to `$SCRATCH` of the allocated node.
