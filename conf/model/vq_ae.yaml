@@ -14,8 +14,8 @@ encoder_conf:
   n_pre_enc_layers: 5
 
 decoder_conf:
-  n_enc_layers: 2
+  n_enc_layers: ${len:${oc.dict.keys:model.encoder_conf.vq_conf}}
   stem_conf:
-    in_channels: 4
-    out_channels: 3
+    in_channels: ${model.encoder_conf.stem_conf.out_channels}
+    out_channels: ${model.encoder_conf.stem_conf.in_channels}
   n_post_enc_layers: 5

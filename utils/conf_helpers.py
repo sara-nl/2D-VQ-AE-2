@@ -10,7 +10,13 @@ from omegaconf import OmegaConf, DictConfig, ListConfig, MISSING
 OmegaConf.register_new_resolver(
     name="path.stem",
     resolver= lambda path: Path(path).stem,
-    replace=True
+    replace=True # need this for multirun
+)
+
+OmegaConf.register_new_resolver(
+    name="len",
+    resolver=lambda iterable: len([elem for elem in iterable if not (isinstance(elem, str) and len(elem) > 0 and elem[0] == '_')]),
+    replace=True # need this for multirun
 )
 
 
