@@ -3,7 +3,7 @@ defaults:
 
 _target_: datamodules.camelyon16.CAMELYON16RandomPatchDataSet
 
-path: $SCRATCH/${path.stem:${oc.env:CAMELYON16_PATH}}
+path: ${oc.env:CAMELYON16_PATH}
 
 train: train
 train_frac: 0.90

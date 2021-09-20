@@ -1,0 +1,4 @@
+ddp_plugin:
+  _target_: pytorch_lightning.plugins.training_type.DDPPlugin
+  sync_batchnorm: null
+  find_unused_parameters: False
