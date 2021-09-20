@@ -23,7 +23,10 @@
 - echo "Detected file ${oc.env:CAMELYON16_PATH}, assuming .tar; copy+untar"
 - mpicopy -v "${oc.env:CAMELYON16_PATH}" -o "$INDIR"
 - srun --tasks-per-node=1 tar -xkf "$INDIR"/"$DATASET_NAME".tar -C "$INDIR"
+
+# This line only works because hydra resolves the config lazily
 - export CAMELYON16_PATH="$INDIR"/${path.stem:${oc.env:CAMELYON16_PATH}}
+
 - else
 - echo "${oc.env:CAMELYON16_PATH} is not a valid file"
 - exit 1
