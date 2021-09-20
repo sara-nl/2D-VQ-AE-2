@@ -60,7 +60,14 @@ class CAMELYON16RandomPatchDataSet(Dataset):
             paths = list(map(self._find_image_mask_pairs_paths, scan_types))
             for i, path in enumerate(paths):
 
-                length, frac = (ln := len(path[0])), round(ln*self.train_frac)
+                # Creating train/val splits, making sure val split length > 0
+                length, frac = (
+                    (ln := len(path[0])),
+                    tf if 0 < (tf := round(ln*self.train_frac)) < ln
+                       else 1 if tf == 0
+                       else tf - 1
+                ) 
+
                 paths[i] = [
                     elem[(slice(frac) if self.train == 'train' else slice(frac, length))]
                     for elem in path
