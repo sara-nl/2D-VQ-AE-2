@@ -1,0 +1,4 @@
+defaults:
+  - /hydra/sweeper: optuna
+  - /hydra/sweeper@overrides: optuna_overrides
+

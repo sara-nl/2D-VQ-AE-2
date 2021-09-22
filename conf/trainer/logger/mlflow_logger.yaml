@@ -1,0 +1,8 @@
+_target_: pytorch_lightning.loggers.mlflow.MLFlowLogger
+experiment_name: default
+run_name: null
+tracking_uri: null
+tags: null
+save_dir: ./runs
+prefix: ''
+artifact_location: No

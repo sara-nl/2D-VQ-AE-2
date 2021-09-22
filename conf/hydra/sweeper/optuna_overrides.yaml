@@ -1,0 +1,2 @@
+defaults:
+  - /trainer/callbacks@_global_.trainer.callbacks: pytorch_lightning_pruning_callback
