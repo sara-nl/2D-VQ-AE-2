@@ -1,5 +1,6 @@
 defaults:
   - plugins: [ddp_plugin]
+  - callbacks: []
 
 _target_: pytorch_lightning.Trainer
 
@@ -9,7 +10,7 @@ replace_sampler_ddp: True
 
 benchmark: True
 
-num_sanity_val_steps: 0
+num_sanity_val_steps: 1
 precision: 16
 
 log_every_n_steps: 50
@@ -21,4 +22,7 @@ max_epochs: 1000
 
 plugins:
   _target_: utils.conf_helpers.instantiate_dictified_listconf
-  _recursive_: False 
+  _recursive_: False
+callbacks:
+  _target_: utils.conf_helpers.instantiate_dictified_listconf
+  _recursive_: False

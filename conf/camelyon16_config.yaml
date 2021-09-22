@@ -5,6 +5,7 @@ defaults:
   - datamodule@train_datamodule: camelyon16_datamodule
   - override hydra/launcher: submitit_lisa
   - override hydra/launcher/setup: camelyon16_setup
+  - override hydra/sweeper: optuna_camelyon16
   - _self_ 
 
 hydra:

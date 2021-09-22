@@ -4,6 +4,7 @@ import torch
 import pytorch_lightning as pl
 from torch import nn
 from hydra.utils import instantiate
+from torchvision.utils import make_grid
 
 from utils.conf_helpers import ModuleConf, OptimizerConf, ModuleConf
 
@@ -52,6 +53,14 @@ class VQAE(pl.LightningModule):
         assert mode in ('train', 'val')
 
         out, encoding_loss = self.forward(batch)
+
+        if mode == 'val' and batch_idx == 0:
+            n_img = min(5, batch.shape[0])
+            self.logger.experiment.add_image(
+                tag=f'{mode}_recon_images',
+                img_tensor=make_grid(torch.cat((batch[:n_img], out[:n_img]), dim=0), nrow=n_img, normalize=True),
+                global_step=self.global_step,
+            )
 
         loss = self.loss_f(input=out, target=batch)
 

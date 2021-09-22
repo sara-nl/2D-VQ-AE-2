@@ -96,7 +96,10 @@ class EMAVectorQuantizer(nn.Module):
         assert ndim >= 3
 
         if inputs.shape[1] != self.embedding_dim:
-            raise NotImplementedError
+            raise NotImplementedError(
+                'VQ dim != channel dim not supported;'
+                f' found channel dim of {inputs.shape[1]}, expected {self.embedding_dim}'
+            )
 
         inputs = inputs.float()
 
