@@ -1,22 +1,27 @@
 # 2D-VQ-AE-2
 2D Vector-Quantized Auto-Encoder for compression of Whole-Slide Images in Histopathology
 
-# How to run
-## Locally
+## How to run
+### Locally
 set `CAMELYON16_PATH` and run `train.py`:
 ```bash
 CAMELYON16_PATH=<camelyon-path> python train.py
 ```
-## Lisa
+### Lisa
 set `CAMELYON16_PATH`, and append `--multirun` to automatically submit a `sbatch` job through `submitit`, which copies CAMELYON16 to `$SCRATCH` of the allocated node.
 ```bash
 CAMELYON16_PATH=<camelyon-path> python train.py --multirun
 ```
-
 Change node type by overwriting the node config, e.g.:
 ```bash
 CAMELYON16_PATH=<camelyon-path> python train.py hydra/launcher/node@hydra.launcher=gpu_titanrtx --multirun
 ```
+
+## WIP results
+Top: original, bottom: reconstruction.  
+Input dimensionality: `256×256×3`, latent dimensionality: `32×32` (i.e. `99.47%` compression).
+
+![image](https://user-images.githubusercontent.com/5969044/134488209-4c1696d3-6478-41d0-a7bf-e7e99544382b.png)
 
 
 
