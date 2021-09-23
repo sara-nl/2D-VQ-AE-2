@@ -19,7 +19,7 @@ CAMELYON16_PATH=<camelyon-path> python train.py hydra/launcher/node@hydra.launch
 
 ## WIP results
 Top: original, bottom: reconstruction.  
-Input dimensionality: `256×256×3`, latent dimensionality: `32×32` (i.e. `99.47%` compression).
+Input dimensionality: `256×256×3` ordinal 8-bit, latent dimensionality: `32×32` categorical 8-bit (i.e. `99.47%` compression).
 
 ![image](https://user-images.githubusercontent.com/5969044/134488209-4c1696d3-6478-41d0-a7bf-e7e99544382b.png)
 
