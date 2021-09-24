@@ -22,6 +22,8 @@ Top: original, bottom: reconstruction.
 Input dimensionality: `256×256×3` ordinal 8-bit, latent dimensionality: `32×32` categorical 8-bit (i.e. `99.47%` compression).
 
 ![image](https://user-images.githubusercontent.com/5969044/134488209-4c1696d3-6478-41d0-a7bf-e7e99544382b.png)
+![image](https://user-images.githubusercontent.com/5969044/134643133-26268fed-d950-4441-82f0-a2358c9d114d.png)
+
 
 
 
