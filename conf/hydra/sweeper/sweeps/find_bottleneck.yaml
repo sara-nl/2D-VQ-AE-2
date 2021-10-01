@@ -1,0 +1,29 @@
+search_space:
+  model.encoder_conf.conv_block_conf.bottleneck_divisor:
+    type: categorical
+    choices:
+      - 0.5
+      - 1
+      - 2
+      - 4
+  model.encoder_conf.down_block_conf.conv_conf.bottleneck_divisor: 
+    type: categorical
+    choices:
+      - 0.5
+      - 1
+      - 2
+      - 4
+  model.decoder_conf.conv_block_conf.bottleneck_divisor:
+    type: categorical
+    choices:
+      - 0.5
+      - 1
+      - 2
+      - 4
+  model.decoder_conf.up_block_conf.conv_conf.bottleneck_divisor:
+    type: categorical
+    choices:
+      - 0.5
+      - 1
+      - 2
+      - 4

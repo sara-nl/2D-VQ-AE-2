@@ -12,6 +12,11 @@ OmegaConf.register_new_resolver(
     resolver= lambda path: Path(path).stem,
     replace=True # need this for multirun
 )
+OmegaConf.register_new_resolver(
+    name="path.absolute",
+    resolver= lambda path: Path(path).absolute(),
+    replace=True # need this for multirun
+)
 
 OmegaConf.register_new_resolver(
     name="len",

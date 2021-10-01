@@ -1,6 +1,7 @@
 from typing import Union, List, Optional, Tuple
 from collections.abc import Iterable
 from functools import partial
+from math import isclose
 
 import torch
 import numpy as np
@@ -130,7 +131,7 @@ class PreActFixupResBlock(nn.Module):
         in_channels: int,
         out_channels: int,
         mode: str,
-        bottleneck_divisor: int,
+        bottleneck_divisor: float,
         activation: ModuleConf,
         conv_conf: ModuleConf,
     ):
@@ -139,7 +140,11 @@ class PreActFixupResBlock(nn.Module):
         assert mode in ("down", "same", "up", "out")
         conv_conf = conv_conf[mode]
 
-        branch_channels = max(max(in_channels, out_channels) // bottleneck_divisor, 1)
+        max_channels = max(in_channels, out_channels)
+        assert isclose(max_channels % bottleneck_divisor, 0), (
+            f"residual channels: {max_channels} not divisible by bottleneck divisor: {bottleneck_divisor}!"
+        )
+        branch_channels = max(round(max_channels / bottleneck_divisor), 1)
 
         self.activation = instantiate(activation)
 

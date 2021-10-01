@@ -1,8 +1,6 @@
 defaults:
+  - default_trainer
   - plugins: [ddp_plugin]
-  - callbacks: []
-
-_target_: pytorch_lightning.Trainer
 
 gpus: "-1"
 accelerator: ddp
@@ -10,19 +8,4 @@ replace_sampler_ddp: True
 
 benchmark: True
 
-num_sanity_val_steps: 1
 precision: 16
-
-log_every_n_steps: 50
-val_check_interval: 0.5
-flush_logs_every_n_steps: 100
-weights_summary: full
-
-max_epochs: 1000
-
-plugins:
-  _target_: utils.conf_helpers.instantiate_dictified_listconf
-  _recursive_: False
-callbacks:
-  _target_: utils.conf_helpers.instantiate_dictified_listconf
-  _recursive_: False

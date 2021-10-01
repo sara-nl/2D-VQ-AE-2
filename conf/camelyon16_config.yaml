@@ -3,10 +3,13 @@ defaults:
   - trainer: ddp_trainer
   - model: vq_ae
   - datamodule@train_datamodule: camelyon16_datamodule
+  - utils: [seed_everything]
   - override hydra/launcher: submitit_lisa
-  - override hydra/launcher/setup: camelyon16_setup
-  - override hydra/sweeper: optuna_camelyon16
-  - _self_ 
+  - _self_
+
+utils:
+  _target_: instantiate_dictified_listconf
+  recursive: False
 
 hydra:
   job:

@@ -1,4 +1,4 @@
 pytorch_lightning_pruning_callback:
   _target_: optuna.integration.PyTorchLightningPruningCallback
   trial: null # ???
-  monitor: val_loss
+  monitor: val_recon_loss

@@ -1,4 +1,9 @@
 defaults:
-  - /hydra/sweeper: optuna
-  - /hydra/sweeper@overrides: optuna_overrides
+  - optuna
+  - optuna_overrides # add it to some namespace so it can be removed if so desired
+  - sweeps@_here_: find_bottleneck
+  - pruner: hyperband
 
+storage: sqlite:///${path.absolute:${hydra.sweep.dir}}/optuna_study.sql
+n_jobs: 8
+n_trials: 64

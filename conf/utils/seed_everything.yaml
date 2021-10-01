@@ -1,0 +1,4 @@
+seed_everything:
+  _target_: pytorch_lightning.utilities.seed.seed_everything
+  seed: 42
+  workers: True
