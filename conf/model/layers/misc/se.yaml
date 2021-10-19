@@ -1,0 +1,5 @@
+_target_: vq_ae.layers.misc.SELayer
+
+in_channels: null # ???
+out_channels: null # ???
+bottleneck_divisor: 4

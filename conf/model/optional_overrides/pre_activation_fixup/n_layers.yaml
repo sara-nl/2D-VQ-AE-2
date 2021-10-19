@@ -1,0 +1,3 @@
+# TODO: write the formula below in plain english
+
+n_layers: ${add:${mul:${model.encoder_conf.down_block_conf.n_down},${model.encoder_conf.down_block_conf.n_pre_layers},${model.encoder_conf.down_block_conf.n_post_layers}},${model.encoder_conf.n_pre_enc_layers},${model.decoder_conf.n_post_enc_layers},${mul:${model.decoder_conf.up_block_conf.n_up},${model.decoder_conf.up_block_conf.n_pre_layers},${model.decoder_conf.up_block_conf.n_post_layers}}}

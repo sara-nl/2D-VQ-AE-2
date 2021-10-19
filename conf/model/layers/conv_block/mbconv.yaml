@@ -1,5 +1,7 @@
 defaults:
-  - /model/layers/activation@activation: elu
+  - /model/layers/activation@activation_conf: silu
+  - /model/layers/misc@se_conf: se
+  - /model/layers/misc@batchnorm_conf: batchnorm2d
 
   - conv_layer@conv_conf.down.branch_conv1: proj2d
   - conv_layer@conv_conf.down.branch_conv2: down2d
@@ -21,15 +23,14 @@ defaults:
   - conv_layer@conv_conf.out.branch_conv3: proj2d
   - conv_layer@conv_conf.out.skip_conv: out2d
 
-_target_: 'vq_ae.layers.conv_block.PreActFixupResBlock'
+_target_: 'vq_ae.layers.conv_block.MBConv'
 _recursive_: False
 
 in_channels: null
 out_channels: null
 mode: null
-n_layers: null
 
-bottleneck_divisor: 4
+expand_ratio: 4
 
 conv_conf:
   down:
@@ -38,6 +39,7 @@ conv_conf:
     branch_conv2:
       bias: False
       padding_mode: 'circular'
+      groups: null # ???
     branch_conv3:
       bias: False
     skip_conv:
@@ -48,6 +50,7 @@ conv_conf:
       bias: False
     branch_conv2:
       bias: False
+      groups: null # ???
     branch_conv3:
       bias: False
     skip_conv:
@@ -58,6 +61,7 @@ conv_conf:
     branch_conv2:
       bias: False
       padding_mode: 'circular'
+      groups: null # ???
     branch_conv3:
       bias: False
     skip_conv:
@@ -68,6 +72,7 @@ conv_conf:
     branch_conv2:
       bias: False
       padding_mode: 'circular'
+      groups: null # ???
     branch_conv3:
       bias: False
     skip_conv:

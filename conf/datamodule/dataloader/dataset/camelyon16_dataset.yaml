@@ -14,4 +14,4 @@ patch_size:
   - 256
   - 256
 
-n_patches_per_wsi: 1000
+n_patches_per_wsi: 250

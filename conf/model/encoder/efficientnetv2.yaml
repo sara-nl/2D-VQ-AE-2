@@ -1,0 +1,4 @@
+defaults:
+  - default
+  - override /model/layers/conv_block@down_block_conf.conv_conf: mbconv
+  - override /model/layers/conv_block@conv_block_conf: mbconv

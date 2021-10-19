@@ -1,2 +1,9 @@
+# @package _global_
+
 defaults:
-  - /trainer/callbacks@_global_.trainer.callbacks: pytorch_lightning_pruning_callback
+  - /trainer/callbacks: [pytorch_lightning_pruning_callback, early_stopping]
+
+trainer:
+  callbacks:
+    early_stopping:
+      monitor: val_recon_loss

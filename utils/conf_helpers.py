@@ -2,6 +2,8 @@ from typing import List, Union, Any
 from dataclasses import dataclass
 from abc import ABC
 from pathlib import Path
+from functools import partial, reduce
+from operator import add, mul
 
 from hydra.utils import instantiate
 from omegaconf import OmegaConf, DictConfig, ListConfig, MISSING
@@ -21,6 +23,17 @@ OmegaConf.register_new_resolver(
 OmegaConf.register_new_resolver(
     name="len",
     resolver=lambda iterable: len([elem for elem in iterable if not (isinstance(elem, str) and len(elem) > 0 and elem[0] == '_')]),
+    replace=True # need this for multirun
+)
+
+OmegaConf.register_new_resolver(
+    name="add",
+    resolver=lambda *x: reduce(add, x),
+    replace=True # need this for multirun
+)
+OmegaConf.register_new_resolver(
+    name="mul",
+    resolver=lambda *x: reduce(mul, x),
     replace=True # need this for multirun
 )
 

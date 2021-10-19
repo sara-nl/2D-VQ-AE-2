@@ -4,11 +4,18 @@ defaults:
   - encoder@encoder_conf: default
   - decoder@decoder_conf: default
 
+  # Init arguments for pre_activation_fixup
+  - optional optional_overrides/pre_activation_fixup@encoder_conf.down_block_conf.conv_conf: ${model/layers/conv_block@model.encoder_conf.down_block_conf.conv_conf}_down
+  - optional optional_overrides/pre_activation_fixup@encoder_conf.conv_block_conf: ${model/layers/conv_block@model.encoder_conf.conv_block_conf}_pre_enc
+  - optional optional_overrides/pre_activation_fixup@decoder_conf.conv_block_conf: ${model/layers/conv_block@model.decoder_conf.conv_block_conf}_post_enc
+  - optional optional_overrides/pre_activation_fixup@decoder_conf.up_block_conf.conv_conf: ${model/layers/conv_block@model.decoder_conf.up_block_conf.conv_conf}_up
+
 _target_: 'vq_ae.model.VQAE'
 _recursive_: False # we init the optim locally
 
 optim_conf:
-  lr: 3e-4 # the best learning rate
+  lr: 3e-4 # <s> the best learning rate </s>
+  amsgrad: True
 
 encoder_conf:
   vq_conf:

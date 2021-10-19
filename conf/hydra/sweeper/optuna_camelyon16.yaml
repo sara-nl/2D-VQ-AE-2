@@ -1,9 +1,16 @@
 defaults:
   - optuna
-  - optuna_overrides # add it to some namespace so it can be removed if so desired
+  - optuna_overrides
   - sweeps@_here_: find_bottleneck
   - pruner: hyperband
 
 storage: sqlite:///${path.absolute:${hydra.sweep.dir}}/optuna_study.sql
 n_jobs: 8
 n_trials: 64
+
+pruner:
+  min_resource: 2 # 2 train epoch
+  max_resource: 250 # 250 epochs
+
+sampler:
+  n_startup_trials: 100 # just a guess

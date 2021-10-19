@@ -64,7 +64,7 @@ class VQAE(pl.LightningModule):
 
         recon_loss = self.loss_f(input=out, target=batch)
 
-        self.log(f'{mode}_recon_loss', recon_loss)
+        self.log(f'{mode}_recon_loss', recon_loss, prog_bar=True)
         for i, l in enumerate(encoding_loss):
             self.log(f'{mode}_encoding_loss_{i}', l)
 

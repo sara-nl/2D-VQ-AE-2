@@ -134,6 +134,7 @@ class PreActFixupResBlock(nn.Module):
         bottleneck_divisor: float,
         activation: ModuleConf,
         conv_conf: ModuleConf,
+        n_layers: int,
     ):
         super().__init__()
 
@@ -182,6 +183,9 @@ class PreActFixupResBlock(nn.Module):
         else:
             self.skip_conv = None
 
+        self.initialize_weights(n_layers)
+
+
     def forward(self, input: torch.Tensor):
         out = input
 
@@ -220,7 +224,118 @@ class PreActFixupResBlock(nn.Module):
 
         # branch_conv3
         nn.init.constant_(self.branch_conv3.weight, val=0)
-        # nn.init.kaiming_normal_(self.branch_conv3.weight)
 
+        # skip_conv
         if self.skip_conv is not None:
             nn.init.xavier_normal_(self.skip_conv.weight)
+
+
+class MBConv(nn.Module):
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        mode: str,
+        expand_ratio: float,
+        activation_conf: ModuleConf,
+        conv_conf: ModuleConf,
+        batchnorm_conf: Optional[ModuleConf],
+        se_conf: Optional[ModuleConf]
+    ):
+        super().__init__()
+
+        assert mode in ("down", "same", "up", "out")
+        conv_conf = conv_conf[mode]   
+
+        max_channels = max(in_channels, out_channels)
+        assert isclose(max_channels * expand_ratio  % 1, 0), (
+            f"max_channels: {max_channels} x expand_ratio: {expand_ratio} % 1 !≈ 0!"
+        )
+        max_channels = round(max_channels * expand_ratio)
+
+        self.branch = nn.Sequential(*filter(None, map(lambda x: instantiate(**x), (
+            {
+                'config': conv_conf['branch_conv1'],
+                'in_channels': in_channels,
+                'out_channels': max_channels
+            }, {
+                'config': batchnorm_conf,
+                'num_features': max_channels
+            }, {
+                'config': activation_conf
+            }, {
+                'config': conv_conf['branch_conv2'],
+                'in_channels': max_channels,
+                'out_channels': max_channels,
+                'groups': max_channels   
+            }, {
+                'config': batchnorm_conf,
+                'num_features': max_channels
+            }, {
+                'config': activation_conf
+            }, {
+                'config': se_conf,
+                'in_channels': max_channels,
+                'out_channels': max_channels,
+            }, {
+                'config': conv_conf['branch_conv3'],
+                'in_channels': max_channels,
+                'out_channels': out_channels
+            }, {
+                'config': batchnorm_conf,
+                'num_features': out_channels
+            }
+        ))))
+        # self.branch = nn.Sequential( 
+        #     instantiate(
+        #         conv_conf['branch_conv1'],
+        #         in_channels=in_channels,
+        #         out_channels=max_channels
+        #     ),
+        #     instantiate(
+        #         conv_conf['batch_norm'],
+        #         num_features=max_channels
+        #     ),
+        #     instantiate(activation),
+        #     instantiate(
+        #         conv_conf['branch_conv2'],
+        #         in_channels=max_channels,
+        #         out_channels=max_channels,
+        #         groups=max_channels
+        #     ),
+        #     instantiate(
+        #         conv_conf['batch_norm'],
+        #         num_features=max_channels
+        #     ),
+        #     instantiate(activation),
+        #     instantiate(
+        #         conv_conf['selayer'] 
+        #     ),
+        #     instantiate(
+        #         conv_conf['branch_conv3'],
+        #         in_channels=max_channels,
+        #         out_channels=out_channels
+        #     ),
+        #     instantiate(
+        #         conv_conf['batch_norm'],
+        #         num_features=out_channels
+        #     ),
+        # )
+        if not (mode in ("same", "out") and in_channels == out_channels):
+            self.skip_conv = instantiate(
+                conv_conf['skip_conv'],
+                in_channels=in_channels,
+                out_channels=out_channels
+            )
+        else:
+            self.skip_conv = None
+
+
+    def forward(self, x):
+        return self.branch(x) + (
+            x
+            if self.skip_conv is None
+            else self.skip_conv(x)
+        )
+
+ 

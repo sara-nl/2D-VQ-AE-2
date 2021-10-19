@@ -3,17 +3,15 @@ import torch
 import pytorch_lightning as pl
 import hydra
 from hydra.utils import instantiate, call
-from omegaconf import OmegaConf
 
 import utils.conf_helpers # import adds parsers to hydra parser
-
 
 @hydra.main(config_path="../conf", config_name="camelyon16_config")
 def main(experiment):
     torch.cuda.empty_cache()
     
-    if utils in experiment:
-        call(utils)
+    if 'utils' in experiment:
+        call(experiment.utils)
 
     if 'trial' in experiment:
         experiment.trainer.callbacks.pytorch_lightning_pruning_callback.trial = experiment.trial

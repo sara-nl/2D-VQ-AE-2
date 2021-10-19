@@ -1,0 +1,7 @@
+_target_: torch.nn.BatchNorm2d
+
+num_features: null # ???
+eps: 1e-05
+momentum: 0.1
+affine: True
+track_running_stats: True

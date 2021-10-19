@@ -8,8 +8,8 @@ defaults:
   - _self_
 
 utils:
-  _target_: instantiate_dictified_listconf
-  recursive: False
+  _target_: utils.conf_helpers.instantiate_dictified_listconf
+  _recursive_: False
 
 hydra:
   job:
