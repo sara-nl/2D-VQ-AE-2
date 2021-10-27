@@ -286,41 +286,7 @@ class MBConv(nn.Module):
                 'num_features': out_channels
             }
         ))))
-        # self.branch = nn.Sequential( 
-        #     instantiate(
-        #         conv_conf['branch_conv1'],
-        #         in_channels=in_channels,
-        #         out_channels=max_channels
-        #     ),
-        #     instantiate(
-        #         conv_conf['batch_norm'],
-        #         num_features=max_channels
-        #     ),
-        #     instantiate(activation),
-        #     instantiate(
-        #         conv_conf['branch_conv2'],
-        #         in_channels=max_channels,
-        #         out_channels=max_channels,
-        #         groups=max_channels
-        #     ),
-        #     instantiate(
-        #         conv_conf['batch_norm'],
-        #         num_features=max_channels
-        #     ),
-        #     instantiate(activation),
-        #     instantiate(
-        #         conv_conf['selayer'] 
-        #     ),
-        #     instantiate(
-        #         conv_conf['branch_conv3'],
-        #         in_channels=max_channels,
-        #         out_channels=out_channels
-        #     ),
-        #     instantiate(
-        #         conv_conf['batch_norm'],
-        #         num_features=out_channels
-        #     ),
-        # )
+
         if not (mode in ("same", "out") and in_channels == out_channels):
             self.skip_conv = instantiate(
                 conv_conf['skip_conv'],
@@ -329,6 +295,10 @@ class MBConv(nn.Module):
             )
         else:
             self.skip_conv = None
+        
+        # init batchnorm gamma to 0
+        with torch.no_grad():
+            self.branch[-1].weight *= 0
 
 
     def forward(self, x):
