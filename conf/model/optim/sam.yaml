@@ -1,0 +1,9 @@
+defaults:
+  - /model/optim@base_optimizer_conf: adam
+
+_target_: vq_ae.optim.sam.SAM
+_recursive_: False
+
+params: null
+rho: 0.05
+adaptive: False

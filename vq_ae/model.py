@@ -7,6 +7,8 @@ from hydra.utils import instantiate
 from torchvision.utils import make_grid
 
 from utils.conf_helpers import ModuleConf, OptimizerConf, ModuleConf
+from utils.train_helpers import maybe_repeat_layer
+from vq_ae.optim.sam import SAM
 
 
 class VQAE(pl.LightningModule):
@@ -17,11 +19,13 @@ class VQAE(pl.LightningModule):
         optim_conf: OptimizerConf,
         loss_f_conf: ModuleConf,
         encoder_conf: ModuleConf,
-        decoder_conf: ModuleConf
+        decoder_conf: ModuleConf,
+        **kwargs
     ):
         super().__init__()
         self.save_hyperparameters()
 
+        # torch.autograd.set_detect_anomaly(True)
         self.optim_conf = optim_conf
 
         # init rest of the configs
@@ -33,6 +37,9 @@ class VQAE(pl.LightningModule):
         ):
             setattr(self, attr_name, instantiate(attr_conf))
 
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
 
     def forward(self, data):
         encodings, *_, encoding_loss = self.encoder(data)
@@ -41,7 +48,12 @@ class VQAE(pl.LightningModule):
         return out, encoding_loss
 
     def configure_optimizers(self):
-        return instantiate(self.optim_conf, params=self.parameters())
+        optim = instantiate(self.optim_conf, params=self.parameters())
+        self.step = (
+            self.sam_update if isinstance(optim, SAM)
+            else self.update
+        )
+        return optim
 
     def training_step(self, batch, batch_idx):
         return self.shared_step(batch, batch_idx, mode='train')
@@ -50,11 +62,12 @@ class VQAE(pl.LightningModule):
         return self.shared_step(batch, batch_idx, mode='val')
 
     def shared_step(self, batch, batch_idx, mode='train'):
-        assert mode in ('train', 'val')
+        assert mode in ('train', 'val', 'test')
 
-        out, encoding_loss = self.forward(batch)
-
-        if mode == 'val' and batch_idx == 0:
+        out, recon_loss, encoding_loss = self.step(batch)
+        
+        val_or_test = mode in ('val', 'test')
+        if val_or_test and batch_idx == 0:
             n_img = min(5, batch.shape[0])
             self.logger.experiment.add_image(
                 tag=f'{mode}_recon_images',
@@ -62,13 +75,44 @@ class VQAE(pl.LightningModule):
                 global_step=self.global_step,
             )
 
-        recon_loss = self.loss_f(input=out, target=batch)
-
-        self.log(f'{mode}_recon_loss', recon_loss, prog_bar=True)
+        self.log(
+            f'{mode}_recon_loss',
+            recon_loss,
+            prog_bar=(mode == 'train'),
+            sync_dist=val_or_test
+        )
         for i, l in enumerate(encoding_loss):
-            self.log(f'{mode}_encoding_loss_{i}', l)
+            self.log(f'{mode}_encoding_loss_{i}', l, sync_dist=val_or_test)
 
         return recon_loss + sum(encoding_loss)
+    
+    def sam_update(self, batch: torch.Tensor) -> Tuple[
+        torch.Tensor, # output image
+        torch.Tensor, # recon loss
+        Sequence[torch.Tensor] # encoding loss
+    ]:
+        '''TODO: find a way to move this to SAM'''
+        assert self.automatic_optimization == False
+        optimizer = self.optimizers()
+        assert isinstance(optimizer, SAM)
+
+        def step(): # not a closure because we want the output for logging
+            out, encoding_loss = self(batch)
+            recon_loss = self.loss_f(input=out, target=batch)
+            self.manual_backward(recon_loss + sum(encoding_loss))
+            return out, recon_loss, encoding_loss
+
+        return optimizer.lightning_step(model=self, forward=step)
+
+    def update(self, batch: torch.Tensor) -> Tuple[
+        torch.Tensor, # output image
+        torch.Tensor, # recon loss
+        Sequence[torch.Tensor] # encoding loss
+    ]:
+        out, encoding_loss = self.forward(batch)
+        recon_loss = self.loss_f(input=out, target=batch)
+
+        return out, recon_loss, encoding_loss
 
 
 class Encoder(nn.Module):
@@ -236,12 +280,3 @@ class Decoder(nn.Module):
             )
 
         return self.out_stem(prev_up)
-
-
-
-def maybe_repeat_layer(layer: Union[Any, Sequence], repetitions: int) -> Sequence:
-    if not isinstance(layer, Sequence):
-        return [layer] * repetitions
-    else:
-        assert len(layer) == repetitions
-        return layer

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union, Any, Sequence
 
 
 def make_divisible(
@@ -15,3 +15,11 @@ def make_divisible(
         divisor if min_value is None else min_value,
         int(value + divisor / 2)
     ) // (divisor if divide else 1)
+
+
+def maybe_repeat_layer(layer: Union[Any, Sequence], repetitions: int) -> Sequence:
+    if not isinstance(layer, Sequence):
+        return [layer] * repetitions
+    else:
+        assert len(layer) == repetitions
+        return layer
