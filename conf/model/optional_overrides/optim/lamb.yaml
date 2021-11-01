@@ -1,0 +1,4 @@
+# @package model
+
+optim_conf:
+  weight_decay: 0.01
