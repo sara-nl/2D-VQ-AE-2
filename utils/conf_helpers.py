@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from abc import ABC
 from pathlib import Path
 from functools import partial, reduce
-from operator import add, mul
+from operator import add, mul, pow
 
 from hydra.utils import instantiate
 from omegaconf import OmegaConf, DictConfig, ListConfig, MISSING
@@ -36,6 +36,12 @@ OmegaConf.register_new_resolver(
     resolver=lambda *x: reduce(mul, x),
     replace=True # need this for multirun
 )
+OmegaConf.register_new_resolver(
+    name="pow",
+    resolver=lambda x, y: pow(x, y),
+    replace=True # need this for multirun
+)
+
 
 
 @dataclass
