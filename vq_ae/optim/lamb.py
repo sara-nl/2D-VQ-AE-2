@@ -78,28 +78,35 @@ class Lamb(Optimizer):
 
                 # Decay the first and second moment running average coefficient
                 # m_t
-                exp_avg.mul_(beta1).add_(1 - beta1, grad)
+                exp_avg.mul_(beta1).add_(other=grad, alpha=(1 - beta1))
                 # v_t
-                exp_avg_sq.mul_(beta2).addcmul_(1 - beta2, grad, grad)
+                exp_avg_sq.mul_(beta2).addcmul_(tensor1=grad, tensor2=grad, value=(1 - beta2))
 
                 # Debiasing
-                bias_correction1 = 1 - beta1 ** state['step']
-                bias_correction2 = 1 - beta2 ** state['step']
-                exp_avg_hat = exp_avg / bias_correction1
-                exp_avg_sq_hat = exp_avg_sq / bias_correction2
+                bias_correction1, bias_correction2 = (
+                    1 - beta1 ** state['step'],
+                    1 - beta2 ** state['step']
+                )
 
-                adam_step = exp_avg_hat / (exp_avg_sq_hat.sqrt().add(group['eps']))
+                exp_avg_hat, exp_avg_sq_hat = (
+                    exp_avg / bias_correction1,
+                    exp_avg_sq / bias_correction2
+                )
+
+                adam_step = exp_avg_hat / (exp_avg_sq_hat.sqrt() + group['eps'])
 
                 if group['weight_decay'] != 0:
-                    adam_step.add_(group['weight_decay'], p.data)
+                    adam_step.add_(other=p.data, alpha=group['weight_decay'])
 
                 weight_norm = torch.norm(p.data)
                 adam_norm = torch.norm(adam_step)
-                if weight_norm > 0 and adam_norm > 0:
-                    trust_ratio = weight_norm / adam_norm
-                else:
-                    trust_ratio = 1.0
 
-                p.data.add_(-group['lr'] * trust_ratio, adam_step)
+                trust_ratio = (
+                    weight_norm / adam_norm
+                    if weight_norm > 0 and adam_norm > 0
+                    else 1.0
+                )
+
+                p.data.add_(other=adam_step, alpha=(-group['lr'] * trust_ratio))
 
         return loss
