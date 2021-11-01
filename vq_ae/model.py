@@ -49,10 +49,6 @@ class VQAE(pl.LightningModule):
 
     def configure_optimizers(self):
         optim = instantiate(self.optim_conf, params=self.parameters())
-        self.step = (
-            self.sam_update if isinstance(optim, SAM)
-            else self.update
-        )
         return optim
 
     def training_step(self, batch, batch_idx):
@@ -63,10 +59,14 @@ class VQAE(pl.LightningModule):
 
     def shared_step(self, batch, batch_idx, mode='train'):
         assert mode in ('train', 'val', 'test')
-
-        out, recon_loss, encoding_loss = self.step(batch)
-        
         val_or_test = mode in ('val', 'test')
+
+        out, recon_loss, encoding_loss = (
+            self.sam_step_and_update(batch) # also calls optim.step()
+            if isinstance(self.optimizers(), SAM) and not val_or_test
+            else self.step(batch)
+        )
+
         if val_or_test and batch_idx == 0:
             n_img = min(5, batch.shape[0])
             self.logger.experiment.add_image(
@@ -86,7 +86,7 @@ class VQAE(pl.LightningModule):
 
         return recon_loss + sum(encoding_loss)
     
-    def sam_update(self, batch: torch.Tensor) -> Tuple[
+    def sam_step_and_update(self, batch: torch.Tensor) -> Tuple[
         torch.Tensor, # output image
         torch.Tensor, # recon loss
         Sequence[torch.Tensor] # encoding loss
@@ -96,15 +96,14 @@ class VQAE(pl.LightningModule):
         optimizer = self.optimizers()
         assert isinstance(optimizer, SAM)
 
-        def step(): # not a closure because we want the output for logging
-            out, encoding_loss = self(batch)
-            recon_loss = self.loss_f(input=out, target=batch)
+        def sam_step(): # not a closure because we want the output for logging
+            out, recon_loss, encoding_loss = self.step(batch)
             self.manual_backward(recon_loss + sum(encoding_loss))
             return out, recon_loss, encoding_loss
 
-        return optimizer.lightning_step(model=self, forward=step)
+        return optimizer.lightning_step(model=self, forward=sam_step)
 
-    def update(self, batch: torch.Tensor) -> Tuple[
+    def step(self, batch: torch.Tensor) -> Tuple[
         torch.Tensor, # output image
         torch.Tensor, # recon loss
         Sequence[torch.Tensor] # encoding loss

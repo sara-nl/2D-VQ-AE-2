@@ -1,5 +1,5 @@
 defaults:
-  - /model/optim@base_optimizer_conf: adam
+  - /model/optim@base_optimizer_conf: adamw
 
 _target_: vq_ae.optim.sam.SAM
 _recursive_: False

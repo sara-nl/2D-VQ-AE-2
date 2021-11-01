@@ -1,10 +1,10 @@
 defaults:
-  - optim@optim_conf: adam
+  - optim@optim_conf: adamw
   - loss_f@loss_f_conf: huber
   - encoder@encoder_conf: default
   - decoder@decoder_conf: default
 
-  - optional optional_overrides: ${model/optim@model.optim_conf}
+  - optional optional_overrides/optim: ${model/optim@model.optim_conf}
 
   # Init arguments for pre_activation_fixup
   - optional optional_overrides/pre_activation_fixup@encoder_conf.down_block_conf.conv_conf: ${model/layers/conv_block@model.encoder_conf.down_block_conf.conv_conf}_down
@@ -14,10 +14,6 @@ defaults:
 
 _target_: 'vq_ae.model.VQAE'
 _recursive_: False # we init the optim locally
-
-optim_conf:
-  lr: 3e-4 # <s> the best learning rate </s>
-  amsgrad: True
 
 encoder_conf:
   vq_conf:

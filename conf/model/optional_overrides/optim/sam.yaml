@@ -1,0 +1,9 @@
+# @package model
+
+defaults:
+  - optional /model/optional_overrides/optim@optim_conf.base_optimizer_conf: ${model/optim@model.optim_conf.base_optimizer_conf} # the /model/optim shouldn't be necessary
+
+optim_conf:
+  adaptive: True
+  rho: 0.5
+automatic_optimization: False

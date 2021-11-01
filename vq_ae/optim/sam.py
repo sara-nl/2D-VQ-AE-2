@@ -17,6 +17,8 @@ class SAM(torch.optim.Optimizer):
     ):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
+        base_optimizer_conf.pop('params', None) # hotfix
+
         super().__init__(params, dict(rho=rho, adaptive=adaptive))
 
         self.base_optimizer = instantiate(base_optimizer_conf, self.param_groups, **base_optimizer_overrides)

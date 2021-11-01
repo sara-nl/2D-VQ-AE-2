@@ -1,0 +1,6 @@
+# @package model
+
+optim_conf:
+  lr: 3e-4 # <s> the best learning rate </s>
+  amsgrad: True
+  weight_decay: 0.01
