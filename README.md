@@ -8,7 +8,9 @@ set `CAMELYON16_PATH` and run `train.py`:
 CAMELYON16_PATH=<camelyon-path> python train.py
 ```
 ### Lisa
-set `CAMELYON16_PATH`, and append `--multirun` to automatically submit a `sbatch` job through `submitit`, which copies CAMELYON16 to `$SCRATCH` of the allocated node.
+set `CAMELYON16_PATH`, and append `--multirun` to automatically submit a `sbatch` job through `submitit`.  
+- If `CAMELYON16_PATH` is a folder, the dataloader loads the dataset over the network.
+- If `CAMELYON16_PATH` is a `.tar`, the file is copied to `$SCRATCH` of the allocated node, and the dataset is loaded locally.
 ```bash
 CAMELYON16_PATH=<camelyon-path> python train.py --multirun
 ```
