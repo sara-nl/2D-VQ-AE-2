@@ -1,13 +1,9 @@
 #!/bin/bash
 
-source ~/.bashrc
+module load 2020
+module load Miniconda3/4.7.12.1
 
-module load 2020 Miniconda3
-
-source deactivate
-source deactivate
-
-module load ASAP
+module load ASAP/8c9a8fb-fosscuda-2020a
 
 source activate 2D-VQ-AE-2
 
