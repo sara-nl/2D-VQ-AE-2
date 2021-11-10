@@ -5,8 +5,7 @@
 - source ${hydra.runtime.config_sources.1.path}/../load-asap.sh
 
 # Multi-node copy util
-- module unload UCX
-- module load mpicopy
+- module load mpicopy/4.2-gompi-2020a OpenMPI/4.0.3-gcccuda-2020a # reload OpenMPI from gcccuda to preserve GPUDirect
 
 - echo "Setting environment variables"
 - export OMP_NUM_THREADS=6
