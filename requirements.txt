@@ -118,7 +118,7 @@ setuptools==52.0.0.post20210125
 six==1.16.0
 smmap==4.0.0
 SQLAlchemy==1.4.22
-sqlparse==0.4.1
+sqlparse==0.4.2
 stevedore==3.4.0
 submitit==1.2.1
 tabulate==0.8.9
