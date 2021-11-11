@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple, Optional
+from typing import List, Sequence, Tuple, Optional
 from dataclasses import dataclass
 from pathlib import Path
 from itertools import chain, zip_longest
@@ -48,7 +48,12 @@ class CAMELYON16RandomPatchDataSet(Dataset):
         self.image_paths, self.mask_paths = (
             _find_image_mask_pairs_paths(self.path, pattern='test')
             if self.train == 'test'
-            else _train_val_split_paths(self.train_frac, self.train, 'normal', 'tumor')
+            else _train_val_split_paths(
+                modality_arrays=tuple(_find_image_mask_pairs_paths(self.path, pattern=pattern)
+                                      for pattern in ('normal', 'tumor')),
+                split_frac=self.train_frac,
+                mode=self.train
+            )
         )
 
         self.n_wsi = len(self.image_paths)
@@ -99,10 +104,10 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
 
 def _train_val_split_paths(
+    modality_arrays: Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]],
     split_frac: float,
     mode: str,  # train or validation
-    *scan_types: str
-) -> Tuple[np.ndarray, ...]:  # Tuple[images, masks]
+) -> Tuple[np.ndarray, np.ndarray]:  # Tuple[images, masks]
     """
     practically: merge n lists of (possibly unequal) size, also based on `split_frac`:
     [(a, a), (b, b)], [(c,),(d,)] into
@@ -112,26 +117,25 @@ def _train_val_split_paths(
     """
     assert mode in ('train', 'validation')
 
-    paths = list(map(_find_image_mask_pairs_paths, scan_types))
-    for i, path in enumerate(paths):
+    temp = []
+    for images, masks in modality_arrays:
 
-        # Creating train/val splits, making sure val split length > 0
-        length, frac = (
-            (ln := len(path[0])),
+        length, split_index = (
+            (ln := len(images)),
             tf if 0 < (tf := round(ln * split_frac)) < ln
             else 1 if tf == 0
             else tf - 1
         )
 
-        paths[i] = [
-            elem[(slice(frac) if mode == 'train' else slice(frac, length))]
-            for elem in path
-        ]
+        temp.append([
+            elem[(slice(split_index) if mode == 'train' else slice(split_index, length))]
+            for elem in (images, masks)
+        ])
 
-    return tuple(
+    return tuple(  # noqa
         map(
             lambda x: np.asarray(list(filter(None, chain.from_iterable(zip_longest(*x))))),
-            zip(*paths)
+            zip(*temp)
         )
     )
 
