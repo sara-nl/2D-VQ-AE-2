@@ -16,7 +16,6 @@ from utils.conf_helpers import DataloaderConf
 
 @dataclass
 class DefaultDataModule(pl.LightningDataModule):
-
     train_dataloader_conf: DataloaderConf
     val_dataloader_conf: DataloaderConf
     test_dataloader_conf: Optional[DataloaderConf] = None
@@ -46,79 +45,17 @@ class CAMELYON16RandomPatchDataSet(Dataset):
     train_frac: float
 
     def __post_init__(self):
-
-        def merge_scan_paths(*scan_types: Sequence) -> Tuple[np.array, np.array]:
-            '''
-            practically: merge n lists of unequal size, also based on `self.train_frac`:
-            [(a, a), (b, b)], [(c,),(d,)] into
-            [(a, c), (a,)],   [(b, d), (b,)]
-
-            This function is obviously extremely overengineered.
-            '''
-            assert self.train in ('train', 'validation')
-
-            paths = list(map(self._find_image_mask_pairs_paths, scan_types))
-            for i, path in enumerate(paths):
-
-                # Creating train/val splits, making sure val split length > 0
-                length, frac = (
-                    (ln := len(path[0])),
-                    tf if 0 < (tf := round(ln*self.train_frac)) < ln
-                       else 1 if tf == 0
-                       else tf - 1
-                ) 
-
-                paths[i] = [
-                    elem[(slice(frac) if self.train == 'train' else slice(frac, length))]
-                    for elem in path
-                ]
-
-            return tuple(map(
-                lambda x: np.asarray(list(filter(None, chain.from_iterable(zip_longest(*x))))),
-                zip(*paths)
-            ))
-
-
         self.image_paths, self.mask_paths = (
-            self.__find_image_mask_pairs_paths(pattern='test')
+            _find_image_mask_pairs_paths(self.path, pattern='test')
             if self.train == 'test'
-            else merge_scan_paths('normal', 'tumor')
+            else _train_val_split_paths(self.train_frac, self.train, 'normal', 'tumor')
         )
 
         self.n_wsi = len(self.image_paths)
         self._length = self.n_wsi * self.n_patches_per_wsi
 
+    def __cascade_sampler(self, image: ImageReader, mask: ImageReader) -> np.ndarray:
 
-    def _find_image_mask_pairs_paths(self, pattern: str) -> Tuple[np.array, np.array]:
-        image_paths, mask_paths = (
-            list(Path(self.path).glob(f'{modality}/*{pattern}*.tif'))
-            for modality in ('images', 'tissue_masks')
-        )
-
-        def assert_matching_paths(image_paths, mask_paths):
-            '''asserting that image and mask names line up'''
-            fault = False
-            mask_name_set = set(map(lambda path: path.stem[:-7], mask_paths))
-            for image_name in map(lambda path: path.stem, image_paths):
-                try:
-                    mask_name_set.remove(image_name)
-                except KeyError:
-                    fault = True
-                    print(f"Error: {image_name} does not have an associated tissue mask!")
-            for mask_name in iter(mask_name_set): # if any mask is left-over
-                fault = True
-                print(f"Error: {mask_name} does not have an associated WSI!")
-            if fault:
-                raise ValueError('WSI/Mask mismatch.')
-
-        assert_matching_paths(image_paths, mask_paths)
-
-        return tuple(
-            np.sort(list(map(str, modality_paths)))
-            for modality_paths in (image_paths, mask_paths)
-        )
-
-    def __cascade_sampler(self, image: ImageReader, mask: ImageReader) -> np.array:
         rng = np.random.default_rng()
 
         start_level = -1
@@ -140,12 +77,12 @@ class CAMELYON16RandomPatchDataSet(Dataset):
             size = (2, 2)
 
         # NOP if spacing == target_spacing
-        discrepancy = round(spacing / target_spacing)
+        discrepancy = round(spacing / target_spacing)  # noqa
         idx = idx * discrepancy + rng.integers(discrepancy, size=2)
 
         return image.read_center(target_spacing, *idx, *self.patch_size, normalized=True)
 
-    def __getitem__(self, index: int) -> np.array:
+    def __getitem__(self, index: int) -> np.ndarray:
         wsi_index = index % self.n_wsi
 
         image, mask = (
@@ -159,3 +96,75 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
     def __len__(self) -> int:
         return self._length
+
+
+def _train_val_split_paths(
+    split_frac: float,
+    mode: str,  # train or validation
+    *scan_types: str
+) -> Tuple[np.ndarray, ...]:  # Tuple[images, masks]
+    """
+    practically: merge n lists of (possibly unequal) size, also based on `split_frac`:
+    [(a, a), (b, b)], [(c,),(d,)] into
+    [(a, c), (a,)],   [(b, d), (b,)]
+
+    This function is obviously extremely overengineered.
+    """
+    assert mode in ('train', 'validation')
+
+    paths = list(map(_find_image_mask_pairs_paths, scan_types))
+    for i, path in enumerate(paths):
+
+        # Creating train/val splits, making sure val split length > 0
+        length, frac = (
+            (ln := len(path[0])),
+            tf if 0 < (tf := round(ln * split_frac)) < ln
+            else 1 if tf == 0
+            else tf - 1
+        )
+
+        paths[i] = [
+            elem[(slice(frac) if mode == 'train' else slice(frac, length))]
+            for elem in path
+        ]
+
+    return tuple(
+        map(
+            lambda x: np.asarray(list(filter(None, chain.from_iterable(zip_longest(*x))))),
+            zip(*paths)
+        )
+    )
+
+
+def _find_image_mask_pairs_paths(
+    path: str,
+    pattern: str,
+    modalities: Tuple[str, str] = ('images', 'tissue_masks')
+) -> Tuple[np.ndarray, np.ndarray]:
+    image_paths, mask_paths = (
+        list(Path(path).glob(f'{modality}/*{pattern}*.tif'))
+        for modality in modalities
+    )
+
+    def assert_matching_paths(image_paths_, mask_paths_):
+        """asserting that image and mask names line up"""
+        fault = False
+        mask_name_set = set(map(lambda path_: path_.stem[:-7], mask_paths_))
+        for image_name in map(lambda path_: path_.stem, image_paths_):
+            try:
+                mask_name_set.remove(image_name)
+            except KeyError:
+                fault = True
+                print(f"Error: {image_name} does not have an associated tissue mask!")
+        for mask_name in iter(mask_name_set):  # if any mask is left-over
+            fault = True
+            print(f"Error: {mask_name} does not have an associated WSI!")
+        if fault:
+            raise ValueError('WSI/Mask mismatch.')
+
+    assert_matching_paths(image_paths, mask_paths)
+
+    return tuple(  # noqa
+        np.sort(list(map(str, modality_paths)))
+        for modality_paths in (image_paths, mask_paths)
+    )
