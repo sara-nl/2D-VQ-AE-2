@@ -3,6 +3,7 @@ defaults:
   - loss_f@loss_f_conf: huber
   - encoder@encoder_conf: default
   - decoder@decoder_conf: default
+  - metrics: null
 
   - optional optional_overrides/optim: ${model/optim@model.optim_conf}
 
@@ -14,6 +15,9 @@ defaults:
 
 _target_: 'vq_ae.model.VQAE'
 _recursive_: False # we init the optim locally
+
+metrics:
+  _target_: utils.instantiate_dictified_listconf
 
 encoder_conf:
   stem_conf:

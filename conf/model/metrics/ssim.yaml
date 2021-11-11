@@ -1,0 +1,12 @@
+_target_: torchmetrics.SSIM
+
+data_range: null
+kernel_size:
+  - 11
+  - 11
+sigma:
+  - 1.5
+  - 1.5
+reduction: elementwise_mean
+k1: 0.01
+k2: 0.03

@@ -1,17 +1,19 @@
-from typing import Union, List, Optional, Tuple
+from collections import Sequence
 from collections.abc import Iterable
 from functools import partial
 from math import isclose
+from typing import List, Optional, Tuple, Union
 
-import torch
 import numpy as np
-from torch import nn
+import torch
 from hydra.utils import instantiate
+from torch import nn
 
 from utils.conf_helpers import ModuleConf
 
 # List of elements | single element | single element + repetitions
 ModuleConfList = Union[List[ModuleConf], Union[ModuleConf, Tuple[ModuleConf, int]]]
+
 
 class DownBlock(nn.Module):
     out_channels: int
@@ -30,18 +32,20 @@ class DownBlock(nn.Module):
             [{**conv_conf, **{'mode': 'same'}}] * n_layers
             for n_layers in (n_pre_layers, n_post_layers)
         ]
-        self.layers = nn.Sequential(*(
-            EnvelopBlock(
-                envelop_conf={**conv_conf, **{'mode': 'down'}},
-                in_channels=in_c,
-                out_channels=out_c,
-                pre_layers=pre_layers,
-                post_layers=post_layers
+        self.layers = nn.Sequential(
+            *(
+                EnvelopBlock(
+                    envelop_conf={**conv_conf, **{'mode': 'down'}},
+                    in_channels=in_c,
+                    out_channels=out_c,
+                    pre_layers=pre_layers,
+                    post_layers=post_layers
+                )
+                for in_c, out_c in (
+                (in_channels * (2 ** j), in_channels * (2 ** (j + 1))) for j in range(n_down)
             )
-            for in_c, out_c in (
-                (in_channels*(2**j), in_channels*(2**(j+1))) for j in range(n_down)
             )
-        ))
+        )
         self.out_channels = in_channels * 2 ** n_down
 
     def forward(self, x):
@@ -49,7 +53,7 @@ class DownBlock(nn.Module):
 
 
 class UpBlock(nn.Module):
-    '''basically a DownBlock in reverse'''
+    """basically a DownBlock in reverse"""
     in_channels: int
 
     def __init__(
@@ -66,18 +70,21 @@ class UpBlock(nn.Module):
             [{**conv_conf, **{'mode': 'same'}}] * n_layers
             for n_layers in (n_pre_layers, n_post_layers)
         ]
-        self.layers = nn.Sequential(*(
-            EnvelopBlock(
-                envelop_conf={**conv_conf, **{'mode': 'up'}},
-                in_channels=in_c,
-                out_channels=out_c,
-                pre_layers=pre_layers,
-                post_layers=post_layers
+        self.layers = nn.Sequential(
+            *(
+                EnvelopBlock(
+                    envelop_conf={**conv_conf, **{'mode': 'up'}},
+                    in_channels=in_c,
+                    out_channels=out_c,
+                    pre_layers=pre_layers,
+                    post_layers=post_layers
+                )
+                for in_c, out_c in (
+                (out_channels * (2 ** (j + 1)), out_channels * (2 ** j)) for j in
+                range(n_up - 1, -1, -1)
             )
-            for in_c, out_c in (
-                (out_channels*(2**(j+1)), out_channels*(2**j)) for j in range(n_up-1, -1, -1)
             )
-        ))
+        )
         self.in_channels = out_channels * 2 ** n_up
 
     def forward(self, x):
@@ -100,15 +107,15 @@ class EnvelopBlock(nn.Module):
             in_channels: int,
             out_channels: int
         ) -> Iterable:
-
             return map(
                 partial(instantiate, in_channels=in_channels, out_channels=out_channels),
-                filter(None, (
-                     ((layers[0] for _ in range(layers[1]))
-                      if len(layers) == 2 and isinstance(layers[1], int)
-                      else layers)
-                     if isinstance(layers, Iterable)
-                     else (layers,))
+                filter(
+                    None, (
+                        ((layers[0] for _ in range(layers[1]))
+                         if len(layers) == 2 and isinstance(layers[1], int)
+                         else layers)
+                        if isinstance(layers, Sequence)
+                        else (layers,))
                 )
             )
 
@@ -185,7 +192,6 @@ class PreActFixupResBlock(nn.Module):
 
         self.initialize_weights(n_layers)
 
-
     def forward(self, input: torch.Tensor):
         out = input
 
@@ -245,47 +251,53 @@ class MBConv(nn.Module):
         super().__init__()
 
         assert mode in ("down", "same", "up", "out")
-        conv_conf = conv_conf[mode]   
+        conv_conf = conv_conf[mode]
 
         max_channels = max(in_channels, out_channels)
-        assert isclose(max_channels * expand_ratio  % 1, 0), (
+        assert isclose(max_channels * expand_ratio % 1, 0), (
             f"max_channels: {max_channels} x expand_ratio: {expand_ratio} % 1 !≈ 0!"
         )
         max_channels = round(max_channels * expand_ratio)
 
-        self.branch = nn.Sequential(*filter(None, map(lambda x: instantiate(**x), (
-            {
-                'config': conv_conf['branch_conv1'],
-                'in_channels': in_channels,
-                'out_channels': max_channels
-            }, {
-                'config': batchnorm_conf,
-                'num_features': max_channels
-            }, {
-                'config': activation_conf
-            }, {
-                'config': conv_conf['branch_conv2'],
-                'in_channels': max_channels,
-                'out_channels': max_channels,
-                'groups': max_channels   
-            }, {
-                'config': batchnorm_conf,
-                'num_features': max_channels
-            }, {
-                'config': activation_conf
-            }, {
-                'config': se_conf,
-                'in_channels': max_channels,
-                'out_channels': max_channels,
-            }, {
-                'config': conv_conf['branch_conv3'],
-                'in_channels': max_channels,
-                'out_channels': out_channels
-            }, {
-                'config': batchnorm_conf,
-                'num_features': out_channels
-            }
-        ))))
+        self.branch = nn.Sequential(
+            *filter(
+                None, map(
+                    lambda x: instantiate(**x), (
+                        {
+                            'config': conv_conf['branch_conv1'],
+                            'in_channels': in_channels,
+                            'out_channels': max_channels
+                        }, {
+                            'config': batchnorm_conf,
+                            'num_features': max_channels
+                        }, {
+                            'config': activation_conf
+                        }, {
+                            'config': conv_conf['branch_conv2'],
+                            'in_channels': max_channels,
+                            'out_channels': max_channels,
+                            'groups': max_channels
+                        }, {
+                            'config': batchnorm_conf,
+                            'num_features': max_channels
+                        }, {
+                            'config': activation_conf
+                        }, {
+                            'config': se_conf,
+                            'in_channels': max_channels,
+                            'out_channels': max_channels,
+                        }, {
+                            'config': conv_conf['branch_conv3'],
+                            'in_channels': max_channels,
+                            'out_channels': out_channels
+                        }, {
+                            'config': batchnorm_conf,
+                            'num_features': out_channels
+                        }
+                    )
+                )
+            )
+        )
 
         if not (mode in ("same", "out") and in_channels == out_channels):
             self.skip_conv = instantiate(
@@ -295,11 +307,10 @@ class MBConv(nn.Module):
             )
         else:
             self.skip_conv = None
-        
+
         # init batchnorm gamma to 0
         with torch.no_grad():
             self.branch[-1].weight *= 0
-
 
     def forward(self, x):
         return self.branch(x) + (
@@ -307,5 +318,3 @@ class MBConv(nn.Module):
             if self.skip_conv is None
             else self.skip_conv(x)
         )
-
- 

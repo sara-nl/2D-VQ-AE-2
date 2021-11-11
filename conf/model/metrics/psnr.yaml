@@ -1,0 +1,6 @@
+_target_: torchmetrics.PSNR
+
+data_range: None
+base: 10.0
+reduction: elementwise_mean
+dim: None

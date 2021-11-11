@@ -1,17 +1,17 @@
-from typing import Any, Union, Optional, Tuple, Sequence # Sequence deprecated from python 3.9+
+from typing import Optional, Sequence, Tuple, Union  # Sequence deprecated from python 3.9+
 
-import torch
 import pytorch_lightning as pl
-from torch import nn
+import torch
 from hydra.utils import instantiate
+from torch import nn, Tensor
 from torchvision.utils import make_grid
 
-from utils.conf_helpers import ModuleConf, OptimizerConf, ModuleConf
+from utils.conf_helpers import ModuleConf, OptimizerConf
 from utils.train_helpers import maybe_repeat_layer
 from vq_ae.optim.sam import SAM
 
 
-class VQAE(pl.LightningModule):
+class VQAE(pl.LightningModule):  # noqa
 
     # Optimizer needs runtime self.parameters(), so need to pass conf objects
     def __init__(
@@ -20,6 +20,7 @@ class VQAE(pl.LightningModule):
         loss_f_conf: ModuleConf,
         encoder_conf: ModuleConf,
         decoder_conf: ModuleConf,
+        metrics: Optional[Sequence[ModuleConf]],
         **kwargs
     ):
         super().__init__()
@@ -33,15 +34,18 @@ class VQAE(pl.LightningModule):
             # optim_conf not present
             ('loss_f', loss_f_conf),
             ('encoder', encoder_conf),
-            ('decoder', decoder_conf)
+            ('decoder', decoder_conf),
+            ('metrics', metrics)
         ):
             setattr(self, attr_name, instantiate(attr_conf))
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-
-    def forward(self, data):
+    def forward(self, data: Tensor) -> Tuple[
+        Tensor,
+        Sequence[Tensor]
+    ]:
         encodings, *_, encoding_loss = self.encoder(data)
         out = self.decoder(encodings)
 
@@ -62,7 +66,7 @@ class VQAE(pl.LightningModule):
         val_or_test = mode in ('val', 'test')
 
         out, recon_loss, encoding_loss = (
-            self.sam_step_and_update(batch) # also calls optim.step()
+            self.sam_step_and_update(batch)  # also calls optim.step()
             if isinstance(self.optimizers(), SAM) and not val_or_test
             else self.step(batch)
         )
@@ -71,7 +75,11 @@ class VQAE(pl.LightningModule):
             n_img = min(5, batch.shape[0])
             self.logger.experiment.add_image(
                 tag=f'{mode}_recon_images',
-                img_tensor=make_grid(torch.cat((batch[:n_img], out[:n_img]), dim=0), nrow=n_img, normalize=True),
+                img_tensor=make_grid(
+                    torch.cat((batch[:n_img], out[:n_img]), dim=0),
+                    nrow=n_img,
+                    normalize=True
+                ),
                 global_step=self.global_step,
             )
 
@@ -85,28 +93,28 @@ class VQAE(pl.LightningModule):
             self.log(f'{mode}_encoding_loss_{i}', l, sync_dist=val_or_test)
 
         return recon_loss + sum(encoding_loss)
-    
-    def sam_step_and_update(self, batch: torch.Tensor) -> Tuple[
-        torch.Tensor, # output image
-        torch.Tensor, # recon loss
-        Sequence[torch.Tensor] # encoding loss
+
+    def sam_step_and_update(self, batch: Tensor) -> Tuple[
+        Tensor,  # output image
+        Tensor,  # recon loss
+        Sequence[Tensor]  # encoding loss
     ]:
-        '''TODO: find a way to move this to SAM'''
-        assert self.automatic_optimization == False
+        # TODO: find a way to move this to SAM
+        assert self.automatic_optimization is False
         optimizer = self.optimizers()
         assert isinstance(optimizer, SAM)
 
-        def sam_step(): # not a closure because we want the output for logging
+        def sam_step():  # not a closure because we want the output for logging
             out, recon_loss, encoding_loss = self.step(batch)
             self.manual_backward(recon_loss + sum(encoding_loss))
             return out, recon_loss, encoding_loss
 
         return optimizer.lightning_step(model=self, forward=sam_step)
 
-    def step(self, batch: torch.Tensor) -> Tuple[
-        torch.Tensor, # output image
-        torch.Tensor, # recon loss
-        Sequence[torch.Tensor] # encoding loss
+    def step(self, batch: Tensor) -> Tuple[
+        Tensor,  # output image
+        Tensor,  # recon loss
+        Sequence[Tensor]  # encoding loss
     ]:
         out, encoding_loss = self.forward(batch)
         recon_loss = self.loss_f(input=out, target=batch)
@@ -132,11 +140,11 @@ class Encoder(nn.Module):
         n_pre_enc_layers, down_block_conf, shortcut_block_conf = (
             maybe_repeat_layer(n_pre_enc_layers, len(vq_layers)),
             maybe_repeat_layer(down_block_conf, len(vq_layers)),
-            maybe_repeat_layer(shortcut_block_conf, len(vq_layers)-1)
+            maybe_repeat_layer(shortcut_block_conf, len(vq_layers) - 1)
         )
 
-        pre_enc_conf = [[{**conv_block_conf, **{'mode':'same'}}] * n_pre_enc for n_pre_enc in n_pre_enc_layers]
-
+        pre_enc_conf = [[{**conv_block_conf, **{'mode': 'same'}}] * n_pre_enc for n_pre_enc in
+                        n_pre_enc_layers]
 
         down_layers, pre_enc_layers, shortcut_layers = ([] for _ in range(3))
 
@@ -144,7 +152,7 @@ class Encoder(nn.Module):
         for down_layer, pre_enc_layer, shortcut_layer in zip(
             down_block_conf,
             pre_enc_conf,
-            (None, *shortcut_block_conf) # prepend None to fix shortcut channel size
+            (None, *shortcut_block_conf)  # prepend None to fix shortcut channel size
         ):
 
             down_block = instantiate(down_layer, in_channels=current_in)
@@ -156,10 +164,14 @@ class Encoder(nn.Module):
                 if shortcut_layer is not None else None
             )
 
-            pre_enc_layers.append(nn.Sequential(*(
-                instantiate(layer, in_channels=current_in, out_channels=current_in)
-                for layer in pre_enc_layer
-            )))
+            pre_enc_layers.append(
+                nn.Sequential(
+                    *(
+                        instantiate(layer, in_channels=current_in, out_channels=current_in)
+                        for layer in pre_enc_layer
+                    )
+                )
+            )
 
         # delete prepended None & append a None so we can easily zip in forward
         del shortcut_layers[0]
@@ -168,39 +180,43 @@ class Encoder(nn.Module):
         self.down_layers = nn.ModuleList(down_layers)
         self.pre_enc_layers, self.shortcut_layers = (
             nn.ModuleList(reversed(layer)) for layer in (
-                pre_enc_layers, shortcut_layers
-            )
+            pre_enc_layers, shortcut_layers
+        )
         )
         self.vq_layers = nn.ModuleList(reversed(vq_layers))
 
-
-    def forward(self, x: torch.Tensor) -> Tuple[ # completely dependent on VQ-layer output
-            Sequence[torch.Tensor], # encodings
-            Sequence[torch.Tensor], # encoding indices
-            Sequence[torch.Tensor], # encoding loss
-        ]:
+    def forward(self, x: Tensor) -> Tuple[  # completely dependent on VQ-layer output
+        Sequence[Tensor],  # encodings
+        Sequence[Tensor],  # encoding indices
+        Sequence[Tensor],  # encoding loss
+    ]:
 
         # Warning: outputs are in order of low-res to high-res!
         # (because of performance reasons)
 
-        down = self.in_stem(x)
+        down: Tensor = self.in_stem(x)
         downsampled = reversed([(down := down_layer(down)) for down_layer in self.down_layers])
 
         # tuple to have nice output type
         # zip(*) to get (enc, *_, loss) each in their own sequence
-        out = tuple(zip(*(
-            # since the last element of self.shortcut_layers is always None,
-            # first iteration is always skipped,
-            # and aux is always defined in the local scope of the next iteration.
-            # walrus operator doesn't support tuple unpacking, so need to do aux[0]
-            (aux := enc(pre_enc(down + (shortcut(aux[0]) if shortcut is not None else 0)))) # type: ignore
-            for down, pre_enc, enc, shortcut in zip(
-                downsampled,
-                self.pre_enc_layers,
-                self.vq_layers,
-                self.shortcut_layers,
+        out = tuple(
+            zip(
+                *(
+                    # since the last element of self.shortcut_layers is always None,
+                    # first iteration is always skipped,
+                    # and aux is always defined in the local scope of the next iteration.
+                    # walrus operator doesn't support tuple unpacking, so need to do aux[0]
+                    (aux := enc(pre_enc(down + (shortcut(aux[0]) if shortcut is not None else 0))))
+                # noqa
+                    for down, pre_enc, enc, shortcut in zip(
+                    downsampled,
+                    self.pre_enc_layers,
+                    self.vq_layers,
+                    self.shortcut_layers,
+                )
+                )
             )
-        )))
+        )
 
         return out
 
@@ -208,7 +224,7 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(
         self,
-        n_enc_layers: int, # TODO: find a way to remove this param
+        n_enc_layers: int,  # TODO: find a way to remove this param
         stem_conf: ModuleConf,
         up_block_conf: Union[ModuleConf, Sequence[ModuleConf]],
         n_post_enc_layers: Union[int, Sequence[int]],
@@ -222,10 +238,11 @@ class Decoder(nn.Module):
         n_post_enc_layers, up_block_conf, shortcut_block_conf = (
             maybe_repeat_layer(n_post_enc_layers, n_enc_layers),
             maybe_repeat_layer(up_block_conf, n_enc_layers),
-            maybe_repeat_layer(shortcut_block_conf, n_enc_layers-1)
+            maybe_repeat_layer(shortcut_block_conf, n_enc_layers - 1)
         )
 
-        post_enc_conf = [[{**conv_block_conf, **{'mode':'same'}}] * n_post_enc for n_post_enc in n_post_enc_layers]
+        post_enc_conf = [[{**conv_block_conf, **{'mode': 'same'}}] * n_post_enc for n_post_enc in
+                         n_post_enc_layers]
 
         up_layers, post_enc_layers, shortcut_layers = ([] for _ in range(3))
 
@@ -233,7 +250,7 @@ class Decoder(nn.Module):
         for up_layer, post_enc_layer, shortcut_layer in zip(
             up_block_conf,
             post_enc_conf,
-            (None, *shortcut_block_conf) # prepend None to fix shortcut channel size
+            (None, *shortcut_block_conf)  # prepend None to fix shortcut channel size
         ):
             up_block = instantiate(up_layer, out_channels=current_out)
             up_layers.append(up_block)
@@ -244,10 +261,14 @@ class Decoder(nn.Module):
                 if shortcut_layer is not None else None
             )
 
-            post_enc_layers.append(nn.Sequential(*(
-                instantiate(layer, in_channels=current_out, out_channels=current_out)
-                for layer in post_enc_layer
-            )))
+            post_enc_layers.append(
+                nn.Sequential(
+                    *(
+                        instantiate(layer, in_channels=current_out, out_channels=current_out)
+                        for layer in post_enc_layer
+                    )
+                )
+            )
 
         # delete prepended None & append a None so we can easily zip in forward
         del shortcut_layers[0]
@@ -255,13 +276,11 @@ class Decoder(nn.Module):
 
         self.up_layers, self.post_enc_layers, self.shortcut_layers = (
             nn.ModuleList(reversed(layer)) for layer in (
-                up_layers, post_enc_layers, shortcut_layers
-            )
+            up_layers, post_enc_layers, shortcut_layers
+        )
         )
 
-
-
-    def forward(self, x: Sequence[torch.Tensor]):
+    def forward(self, x: Sequence[Tensor]) -> Tensor:
         # x should be from low-res to high-res
 
         prev_up = 0
@@ -273,8 +292,8 @@ class Decoder(nn.Module):
         ):
             prev_up = up(
                 prev_up + post_enc(
-                    (0 if shortcut is None else shortcut(aux))
-                    + (aux := enc) # define aux after shortcut
+                    (0 if shortcut is None else shortcut(aux))  # noqa
+                    + (aux := enc)  # define aux after shortcut
                 )
             )
 

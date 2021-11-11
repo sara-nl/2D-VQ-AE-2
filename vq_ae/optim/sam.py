@@ -1,4 +1,4 @@
-from typing import Callable, Sequence, Union, Type
+from typing import Callable, Sequence, Type, Union
 
 import torch
 from hydra.utils import instantiate
@@ -17,11 +17,15 @@ class SAM(torch.optim.Optimizer):
     ):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
-        base_optimizer_conf.pop('params', None) # hotfix
+        base_optimizer_conf.pop('params', None)  # hotfix
 
         super().__init__(params, dict(rho=rho, adaptive=adaptive))
 
-        self.base_optimizer = instantiate(base_optimizer_conf, self.param_groups, **base_optimizer_overrides)
+        self.base_optimizer = instantiate(
+            base_optimizer_conf,
+            self.param_groups,
+            **base_optimizer_overrides
+        )
         self.param_groups = self.base_optimizer.param_groups
 
     @torch.no_grad()
@@ -35,10 +39,10 @@ class SAM(torch.optim.Optimizer):
                     continue
                 self.state[p]["old_p"] = p.data.clone()
                 e_w = (
-                    torch.pow(p, 2)
-                    if group["adaptive"]
-                    else 1.0
-                ) * p.grad * scale.to(p)
+                          torch.pow(p, 2)
+                          if group["adaptive"]
+                          else 1.0
+                      ) * p.grad * scale.to(p)
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
 
         if zero_grad:
@@ -72,7 +76,7 @@ class SAM(torch.optim.Optimizer):
         if switch:
             _switch_training(model, training=False, modules=modules)
 
-        forward() # discard second returns
+        forward()  # discard second returns
         self.second_step(zero_grad=True)
 
         if switch:
@@ -89,15 +93,19 @@ class SAM(torch.optim.Optimizer):
         closure()
         self.second_step()
 
-
     def _grad_norm(self):
-        shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
+        shared_device = self.param_groups[0]["params"][
+            0].device  # put everything on the same device, in case of model parallelism
         norm = torch.norm(
-            torch.stack([
-                ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(shared_device)
-                for group in self.param_groups for p in group["params"]
-                if p.grad is not None
-            ]),
+            torch.stack(
+                [
+                    ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(
+                        shared_device
+                    )
+                    for group in self.param_groups for p in group["params"]
+                    if p.grad is not None
+                ]
+            ),
             p=2
         )
         return norm
@@ -107,7 +115,9 @@ class SAM(torch.optim.Optimizer):
         self.base_optimizer.param_groups = self.param_groups
 
 
-def _switch_training(model, training: bool, modules: Union[torch.nn.Module, Sequence[torch.nn.Module]]):
+def _switch_training(
+    model, training: bool, modules: Union[torch.nn.Module, Sequence[torch.nn.Module]]
+):
     def _switch(module):
         if isinstance(module, modules):
             module.training = training

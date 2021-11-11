@@ -24,7 +24,7 @@ class SELayer(nn.Module):
         b, c, *dim = x.size()
         ndims = len(dim)
 
-        y = x.mean(dim=tuple(d for d in range(2, ndims+2)))
+        y = x.mean(dim=tuple(d for d in range(2, ndims + 2)))
         y = self.fc(y).view(b, c, *(1 for _ in range(ndims)))
 
         return x * y

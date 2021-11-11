@@ -2,6 +2,7 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+
 class EMAVectorQuantizer(nn.Module):
     # Code originally adapted from:
     # https://colab.research.google.com/github/zalandoresearch/pytorch-vq-vae/blob/master/vq-vae.ipynb#scrollTo=fknqLRCvdJ4I
@@ -12,6 +13,7 @@ class EMAVectorQuantizer(nn.Module):
     """
     EMA-updated Vector Quantizer
     """
+
     def __init__(
         self,
         num_embeddings: int,
@@ -23,9 +25,9 @@ class EMAVectorQuantizer(nn.Module):
         super().__init__()
 
         embed = torch.randn(num_embeddings, embedding_dim)
-        self.register_buffer("embed", embed) # e_i
-        self.register_buffer("embed_avg", embed.clone()) # m_i
-        self.register_buffer("cluster_size", torch.zeros(num_embeddings)) # N_i
+        self.register_buffer("embed", embed)  # e_i
+        self.register_buffer("embed_avg", embed.clone())  # m_i
+        self.register_buffer("cluster_size", torch.zeros(num_embeddings))  # N_i
 
         # Needs to be a buffer, otherwise doesn't get added to state dict
         self.register_buffer("first_pass", torch.as_tensor(True))
@@ -55,14 +57,14 @@ class EMAVectorQuantizer(nn.Module):
             torch.distributed.all_reduce(dw)
 
         self.cluster_size.data.mul_(self.decay).add_(
-            new_cluster_size, alpha=(1-self.decay)
+            new_cluster_size, alpha=(1 - self.decay)
         )
 
-        self.embed_avg.data.mul_(self.decay).add_(dw, alpha=(1-self.decay))
+        self.embed_avg.data.mul_(self.decay).add_(dw, alpha=(1 - self.decay))
 
         # Laplacian smoothing
         n = self.cluster_size.sum()
-        cluster_size = n * ( # times n because we don't want probabilities but counts
+        cluster_size = n * (  # times n because we don't want probabilities but counts
             (self.cluster_size + self.laplace_alpha)
             / (n + self.num_embeddings * self.laplace_alpha)
         )
@@ -104,7 +106,11 @@ class EMAVectorQuantizer(nn.Module):
         inputs = inputs.float()
 
         with torch.no_grad():
-            channel_last = inputs.permute(0, *range(2, ndim), 1) # XXX: might not actually be necessary
+            channel_last = inputs.permute(
+                0,
+                *range(2, ndim),
+                1
+            )  # XXX: might not actually be necessary
             input_shape = channel_last.shape
 
             flat_input = channel_last.reshape(-1, self.embedding_dim)
@@ -115,8 +121,14 @@ class EMAVectorQuantizer(nn.Module):
             # although faster, mm is too inaccurate:
             # https://github.com/pytorch/pytorch/issues/42479
             encoding_indices = torch.argmin(
-                torch.cdist(flat_input, self.embed, ndim, compute_mode='donot_use_mm_for_euclid_dist')
-            , dim=1)
+                torch.cdist(
+                    flat_input,
+                    self.embed,
+                    ndim,
+                    compute_mode='donot_use_mm_for_euclid_dist'
+                )
+                , dim=1
+            )
             quantized = self.embed_code(encoding_indices).reshape(input_shape)
 
             if self.training:
@@ -126,7 +138,7 @@ class EMAVectorQuantizer(nn.Module):
             # perplexity = torch.exp(-torch.sum(avg_probs * torch.log(avg_probs + 1e-10)))
 
             # Cast everything back to the same order and dimensions of the input
-            quantized = quantized.permute(0, -1, *range(1, ndim-1))
+            quantized = quantized.permute(0, -1, *range(1, ndim - 1))
             encoding_indices = encoding_indices.reshape(input_shape[:-1])
 
         # Don't need to detach quantized; doesn't require grad
