@@ -143,8 +143,10 @@ class Encoder(nn.Module):
             maybe_repeat_layer(shortcut_block_conf, len(vq_layers) - 1)
         )
 
-        pre_enc_conf = [[{**conv_block_conf, **{'mode': 'same'}}] * n_pre_enc for n_pre_enc in
-                        n_pre_enc_layers]
+        pre_enc_conf = [
+            [{**conv_block_conf, **{'mode': 'same'}}] * n_pre_enc
+            for n_pre_enc in n_pre_enc_layers
+        ]
 
         down_layers, pre_enc_layers, shortcut_layers = ([] for _ in range(3))
 
@@ -164,14 +166,10 @@ class Encoder(nn.Module):
                 if shortcut_layer is not None else None
             )
 
-            pre_enc_layers.append(
-                nn.Sequential(
-                    *(
-                        instantiate(layer, in_channels=current_in, out_channels=current_in)
-                        for layer in pre_enc_layer
-                    )
-                )
-            )
+            pre_enc_layers.append(nn.Sequential(*(
+                instantiate(layer, in_channels=current_in, out_channels=current_in)
+                for layer in pre_enc_layer
+            )))
 
         # delete prepended None & append a None so we can easily zip in forward
         del shortcut_layers[0]
@@ -179,9 +177,8 @@ class Encoder(nn.Module):
 
         self.down_layers = nn.ModuleList(down_layers)
         self.pre_enc_layers, self.shortcut_layers = (
-            nn.ModuleList(reversed(layer)) for layer in (
-            pre_enc_layers, shortcut_layers
-        )
+            nn.ModuleList(reversed(layer))
+            for layer in (pre_enc_layers, shortcut_layers)
         )
         self.vq_layers = nn.ModuleList(reversed(vq_layers))
 
@@ -199,24 +196,19 @@ class Encoder(nn.Module):
 
         # tuple to have nice output type
         # zip(*) to get (enc, *_, loss) each in their own sequence
-        out = tuple(
-            zip(
-                *(
-                    # since the last element of self.shortcut_layers is always None,
-                    # first iteration is always skipped,
-                    # and aux is always defined in the local scope of the next iteration.
-                    # walrus operator doesn't support tuple unpacking, so need to do aux[0]
-                    (aux := enc(pre_enc(down + (shortcut(aux[0]) if shortcut is not None else 0))))
-                # noqa
-                    for down, pre_enc, enc, shortcut in zip(
-                    downsampled,
-                    self.pre_enc_layers,
-                    self.vq_layers,
-                    self.shortcut_layers,
-                )
-                )
+        out = tuple(zip(*(
+            # since the last element of self.shortcut_layers is always None,
+            # first iteration is always skipped,
+            # and aux is always defined in the local scope of the next iteration.
+            # walrus operator doesn't support tuple unpacking, so need to do aux[0]
+            (aux := enc(pre_enc(down + (shortcut(aux[0]) if shortcut is not None else 0))))  # noqa
+            for down, pre_enc, enc, shortcut in zip(
+                downsampled,
+                self.pre_enc_layers,
+                self.vq_layers,
+                self.shortcut_layers,
             )
-        )
+        )))
 
         return out
 
@@ -261,23 +253,18 @@ class Decoder(nn.Module):
                 if shortcut_layer is not None else None
             )
 
-            post_enc_layers.append(
-                nn.Sequential(
-                    *(
-                        instantiate(layer, in_channels=current_out, out_channels=current_out)
-                        for layer in post_enc_layer
-                    )
-                )
-            )
+            post_enc_layers.append(nn.Sequential(*(
+                instantiate(layer, in_channels=current_out, out_channels=current_out)
+                for layer in post_enc_layer
+            )))
 
         # delete prepended None & append a None so we can easily zip in forward
         del shortcut_layers[0]
         shortcut_layers.append(None)
 
         self.up_layers, self.post_enc_layers, self.shortcut_layers = (
-            nn.ModuleList(reversed(layer)) for layer in (
-            up_layers, post_enc_layers, shortcut_layers
-        )
+            nn.ModuleList(reversed(layer))
+            for layer in (up_layers, post_enc_layers, shortcut_layers)
         )
 
     def forward(self, x: Sequence[Tensor]) -> Tensor:
