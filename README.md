@@ -4,7 +4,7 @@
 ## How to run
 
 ### Installation
-See [INSTALL.md](https://github.com/sara-nl/2D-VQ-AE-2/blob/main/INSTALL.md).  
+See [INSTALL.md](./INSTALL.md).  
 We provide both an `environment.yml` and a `requirements.txt`, but we suggest the usage of `environment.yml`.
 
 ### Locally
