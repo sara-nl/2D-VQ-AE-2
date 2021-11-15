@@ -1,17 +1,19 @@
-from typing import List, Sequence, Tuple, Optional
+import bisect
+import functools
 from dataclasses import dataclass
-from pathlib import Path
 from itertools import chain, zip_longest
+from pathlib import Path
+from typing import Optional, Tuple
 
 import numpy as np
 import pytorch_lightning as pl
+from albumentations import BasicTransform
 from hydra.utils import instantiate
 from torch.utils.data import Dataset
 from torch.utils.data.dataloader import DataLoader
-from albumentations import BasicTransform
 
-from wsi_io.imagereader import ImageReader
 from utils.conf_helpers import DataloaderConf
+from wsi_io.imagereader import ImageReader
 
 
 @dataclass
@@ -49,8 +51,10 @@ class CAMELYON16RandomPatchDataSet(Dataset):
             _find_image_mask_pairs_paths(self.path, pattern='test')
             if self.train == 'test'
             else _train_val_split_paths(
-                modality_arrays=tuple(_find_image_mask_pairs_paths(self.path, pattern=pattern)
-                                      for pattern in ('normal', 'tumor')),
+                modality_arrays=tuple(  # type: ignore
+                    _find_image_mask_pairs_paths(self.path, pattern=pattern)
+                    for pattern in ('normal', 'tumor')
+                ),
                 split_frac=self.train_frac,
                 mode=self.train
             )
@@ -103,6 +107,89 @@ class CAMELYON16RandomPatchDataSet(Dataset):
         return self._length
 
 
+class CAMELYON16SlicePatchDataSet(Dataset):
+    """
+    A dataset object of non-overlapping patches from Camelyon16
+    """
+
+    def __init__(
+        self,
+        path: str,
+        spacing: float,
+        spacing_tolerance: float,
+        patch_size: Tuple[int, int],
+        transforms: Optional[BasicTransform],
+        train: str,
+        train_frac: float,
+        **throwaway_kwargs
+    ):
+        self.image_paths, _ = (
+            _find_image_mask_pairs_paths(self.path, pattern='test')
+            if train == 'test'
+            else _train_val_split_paths(
+                modality_arrays=tuple(  # type: ignore
+                    _find_image_mask_pairs_paths(path, pattern=pattern)
+                    for pattern in ('normal', 'tumor')
+                ),
+                split_frac=train_frac,
+                mode=train
+            )
+        )
+
+        self.spacing = spacing
+        self.spacing_tolerance = spacing_tolerance
+        self.patch_size = patch_size
+        self.transforms = transforms
+
+    def __len__(self):
+        return self._cum_lengths[-1]
+
+    @functools.cached_property
+    def _lengths(self) -> np.ndarray:  # np.ndarray[...]
+        return self._sizes.prod(axis=-1)
+
+    @functools.cached_property
+    def _cum_lengths(self) -> np.ndarray:
+        return np.cumsum(self._lengths)
+
+    @functools.cached_property
+    def _sizes(self) -> np.ndarray:  # np.ndarray[..., 2]
+        return np.asarray(
+            [
+                (img := ImageReader(img_path, self.spacing_tolerance)).shapes[
+                    img.level(self.spacing)]
+                for img_path in self.image_paths
+            ]
+        ) // self.patch_size
+
+    def __getitem__(self, index) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Get a non-overlapping image patch of size self.image_patch
+
+        :param index:
+        :return:
+            - Image patch
+            - Patch indices w.r.t. the original image
+        """
+        img_index: np.int = bisect.bisect_left(self._cum_lengths, index)
+        patch_index = index - (self._cum_lengths[img_index-1] if index != 0 else 0)
+
+        patch_indices = np.asarray((
+            patch_index // self._sizes[img_index, 1],
+            patch_index %  self._sizes[img_index, 0]  # noqa[E222]
+        )) * self.patch_size
+
+        return (  # type: ignore
+            ImageReader(self.image_paths[img_index], self.spacing_tolerance).read(
+                self.spacing,
+                *patch_indices,  # row, col
+                *self.patch_size,  # height, width,
+                normalized=True
+            ),
+            patch_indices
+        )
+
+
 def _train_val_split_paths(
     modality_arrays: Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]],
     split_frac: float,
@@ -127,12 +214,14 @@ def _train_val_split_paths(
             else tf - 1
         )
 
-        temp.append([
-            elem[(slice(split_index) if mode == 'train' else slice(split_index, length))]
-            for elem in (images, masks)
-        ])
+        temp.append(
+            [
+                elem[(slice(split_index) if mode == 'train' else slice(split_index, length))]
+                for elem in (images, masks)
+            ]
+        )
 
-    return tuple(  # noqa
+    return tuple(  # type: ignore
         map(
             lambda x: np.asarray(list(filter(None, chain.from_iterable(zip_longest(*x))))),
             zip(*temp)
@@ -168,7 +257,7 @@ def _find_image_mask_pairs_paths(
 
     assert_matching_paths(image_paths, mask_paths)
 
-    return tuple(  # noqa
+    return tuple(  # type: ignore
         np.sort(list(map(str, modality_paths)))
         for modality_paths in (image_paths, mask_paths)
     )
