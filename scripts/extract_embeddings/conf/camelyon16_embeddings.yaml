@@ -1,0 +1,10 @@
+run_path: ???
+force_outputs_or_multirun_root: True
+dataset_target_hotswap: datamodules.camelyon16.CAMELYON16SlicePatchDataSet
+
+hydra:
+  job:
+    env_set:
+      HYDRA_FULL_ERROR: "1"
+    env_copy:
+      - CAMELYON16_PATH
