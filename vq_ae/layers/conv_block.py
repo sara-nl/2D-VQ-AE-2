@@ -141,7 +141,7 @@ class PreActFixupResBlock(nn.Module):
         bottleneck_divisor: float,
         activation: ModuleConf,
         conv_conf: ModuleConf,
-        n_layers: int,
+        n_layers: Optional[int] = None,
     ):
         super().__init__()
 
@@ -190,10 +190,11 @@ class PreActFixupResBlock(nn.Module):
         else:
             self.skip_conv = None
 
-        self.initialize_weights(n_layers)
+        if n_layers is not None:
+            self.initialize_weights(n_layers)
 
-    def forward(self, input: torch.Tensor):
-        out = input
+    def forward(self, inp: torch.Tensor):
+        out = inp
 
         out = self.activation(out + self.bias1a)
         out = self.branch_conv1(out + self.bias1b)
@@ -207,9 +208,9 @@ class PreActFixupResBlock(nn.Module):
         out = out * self.scale + self.bias4
 
         out = out + (
-            self.skip_conv(input + self.bias1c) + self.bias1d
+            self.skip_conv(inp + self.bias1c) + self.bias1d
             if self.skip_conv is not None
-            else input
+            else inp
         )
 
         return out

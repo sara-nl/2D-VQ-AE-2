@@ -2,13 +2,14 @@ import hydra
 import pytorch_lightning as pl
 import torch
 from hydra.utils import call, instantiate
-
-import utils.conf_helpers  # import adds parsers to hydra parser
+from omegaconf import OmegaConf
 
 
 @hydra.main(config_path="../conf", config_name="camelyon16_config")
 def main(experiment):
     torch.cuda.empty_cache()
+
+    OmegaConf.save(experiment, 'experiment.yml')
 
     if 'utils' in experiment:
         call(experiment.utils)
@@ -26,4 +27,7 @@ def main(experiment):
 
 
 if __name__ == '__main__':
+    from utils.conf_helpers import add_resolvers
+    add_resolvers()
+
     main()
