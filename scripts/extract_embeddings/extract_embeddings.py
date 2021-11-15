@@ -25,36 +25,50 @@ class ExtractEmbeddingsConf(DictConfig):
     force_outputs_or_multirun_as_root: bool
 
 
+class CheckpointNotFoundError(ValueError):
+    ...
+
+
+class TooManyCheckpointsError(ValueError):
+    ...
+
+
 @hydra.main(config_path="./conf", config_name="camelyon16_embeddings")
 def main(
     cfg: ExtractEmbeddingsConf,
 ):
     cfg = instantiate(cfg)
 
-    folder_path = _parse_input_path(cfg.run_path)
-    run_folders = find_all_run_folders(folder_path, patterns=('.hydra', 'lightning_logs'))
+    run_path = _parse_input_path(cfg.run_path)
+    ckpt_folder = find_ckpt_folder(run_path, pattern=('.hydra', 'lightning_logs'))
 
-    for run_folder in run_folders:
-        checkpoint_path = list(run_folder.rglob('epoch=*.ckpt'))
-        if len(checkpoint_path) == 0:
-            logging.info(f"Could not find a model checkpoint in {run_folder}")
-            continue
+    checkpoint_path = list(ckpt_folder.rglob('epoch=*.ckpt'))
 
-        # TODO: smarter checkpoint finder instead of just taking the last checkpoint
-        model = VQAE.load_from_checkpoint(sorted(checkpoint_path)[-1])  # type: ignore
+    if len(checkpoint_path) == 0:
+        raise CheckpointNotFoundError(f"Could not find a model checkpoint in {ckpt_folder}")
 
-        GlobalHydra.instance().clear()
-        with initialize_config_dir(str(run_folder / '.hydra')):
-            run_cfg = compose('config')
+    # TODO: smarter checkpoint finder instead of just taking the last checkpoint
+    model = VQAE.load_from_checkpoint(sorted(checkpoint_path)[-1])  # type: ignore
 
-        dataset_config = run_cfg.train_datamodule.train_dataloader_conf.dataset
-        dataset_config._target_ = cfg.dataset_target_hotswap
-        dataset = instantiate(dataset_config)
+    GlobalHydra.instance().clear()
+    with initialize_config_dir(str(ckpt_folder / '.hydra')):
+        run_cfg = compose('config')
 
-        transforms = instantiate(run_cfg)
+    dataset_config = run_cfg.train_datamodule.train_dataloader_conf.dataset
+    dataset_config._target_ = cfg.dataset_target_hotswap
+    dataset = instantiate(dataset_config)
 
 
-def find_all_run_folders(
+def find_ckpt_folder(path: Path, pattern: Iterable[str]):
+    ckpt_folders = find_all_ckpt_folders(path, pattern)
+
+    if len(ckpt_folders) > 1:
+        raise TooManyCheckpointsError(f'More than one checkpoint found from root dir {path}')
+
+    return ckpt_folders[0]
+
+
+def find_all_ckpt_folders(
     folder: Path,
     patterns: Iterable[str]
 ) -> list[Path]:
