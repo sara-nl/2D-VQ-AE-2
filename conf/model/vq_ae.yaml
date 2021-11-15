@@ -3,7 +3,6 @@ defaults:
   - loss_f@loss_f_conf: huber
   - encoder@encoder_conf: default
   - decoder@decoder_conf: default
-  - metrics: null
 
   - optional optional_overrides/optim: ${model/optim@model.optim_conf}
 

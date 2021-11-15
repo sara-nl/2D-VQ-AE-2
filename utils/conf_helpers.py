@@ -1,55 +1,47 @@
-from typing import List, Union, Any
+from collections.abc import Callable
 from dataclasses import dataclass
-from abc import ABC
-from pathlib import Path
-from functools import partial, reduce
+from functools import reduce
 from operator import add, mul, pow
+from pathlib import Path
+from typing import Any, List, Union
 
 from hydra.utils import instantiate
-from omegaconf import OmegaConf, DictConfig, ListConfig, MISSING
+from omegaconf import DictConfig, ListConfig, MISSING, OmegaConf
 
 
-OmegaConf.register_new_resolver(
-    name="path.stem",
-    resolver= lambda path: Path(path).stem,
-    replace=True # need this for multirun
-)
-OmegaConf.register_new_resolver(
-    name="path.absolute",
-    resolver= lambda path: Path(path).absolute(),
-    replace=True # need this for multirun
-)
+def add_resolvers() -> None:
+    """Adds resolvers to the OmegaConf parsers"""
 
-OmegaConf.register_new_resolver(
-    name="len",
-    resolver=lambda iterable: len([elem for elem in iterable if not (isinstance(elem, str) and len(elem) > 0 and elem[0] == '_')]),
-    replace=True # need this for multirun
-)
+    def add_resolver(name: str, resolver: Callable):
+        OmegaConf.register_new_resolver(
+            name=name,
+            resolver=resolver,
+            replace=True  # need this for multirun
+        )
 
-OmegaConf.register_new_resolver(
-    name="add",
-    resolver=lambda *x: reduce(add, x),
-    replace=True # need this for multirun
-)
-OmegaConf.register_new_resolver(
-    name="mul",
-    resolver=lambda *x: reduce(mul, x),
-    replace=True # need this for multirun
-)
-OmegaConf.register_new_resolver(
-    name="pow",
-    resolver=lambda x, y: pow(x, y),
-    replace=True # need this for multirun
-)
-
+    for name_, resolver_ in (
+        ("path.stem", lambda path: Path(path).stem),
+        ("path.absolute", lambda path: Path(path).absolute()),
+        # calculate length of any list or object,
+        # but skip list elements if they are a `str` which starts with '_'
+        ("len", lambda iterable: len([
+            elem for elem in iterable
+            if not (isinstance(elem, str) and len(elem) > 0 and elem[0] == '_')
+        ])),
+        ("add", lambda *x: reduce(add, x)),
+        ("mul", lambda *x: reduce(mul, x)),
+        ("pow", lambda x, y: pow(x, y))
+    ):
+        add_resolver(name_, resolver_)
 
 
 @dataclass
-class DatasetConf(ABC):
+class DatasetConf(DictConfig):
     _target_: str = 'torch.utils.data.Dataset'
 
+
 @dataclass
-class DataloaderConf:
+class DataloaderConf(DictConfig):
     _target_: str = 'torch.utils.data.DataLoader'
 
     dataset: DatasetConf = MISSING
@@ -62,16 +54,18 @@ class DataloaderConf:
     prefetch_factor: int = 2
     persistent_workers: bool = True
 
-@dataclass
-class OptimizerConf(ABC):
-    _target_: str = 'torch.optim.Optimizer'
 
 @dataclass
-class ModuleConf(ABC):
+class OptimizerConf(DictConfig):
+    _target_: str = 'torch.optim.Optimizer'
+
+
+@dataclass
+class ModuleConf(DictConfig):
     _target_: str = 'torch.nn.Module'
 
 
-def instantiate_nested_dictconf(**nested_conf) -> Any:
+def instantiate_nested_dictconf(**nested_conf: DictConfig) -> Any:
     listified_obj = instantiate_dictified_listconf(**nested_conf)
 
     assert len(listified_obj) == 1, f"more than one root object found in {listified_obj}"
@@ -79,13 +73,13 @@ def instantiate_nested_dictconf(**nested_conf) -> Any:
     return listified_obj[0]
 
 
-def instantiate_dictified_listconf(**nested_conf) -> List:
-    '''
+def instantiate_dictified_listconf(**nested_conf: DictConfig) -> List:
+    """
     Warning:
     set `_recursive_: False`
     at the same level as `_target_: utils.conf_helpers.instantiate_nested_conf`
     inside your config!
-    '''
+    """
 
     de_nested = listify_nested_conf(nested_conf)
 
@@ -96,7 +90,7 @@ def instantiate_dictified_listconf(**nested_conf) -> List:
 
 
 def listify_nested_conf(conf: Any) -> Union[DictConfig, ListConfig]:
-    '''
+    """
     Given the keys and values of a nested config,
     removes keys and makes their corresponding value a ListConfig,
     if the nest level doesn't contain the key `_target_`.
@@ -122,7 +116,7 @@ def listify_nested_conf(conf: Any) -> Union[DictConfig, ListConfig]:
         - _target: albumentations.pytorch.transforms.ToTensorV2
       _target_: albumentations.Compose
     ```
-    '''
+    """
 
     if isinstance(conf, (DictConfig, dict)):
         return (
@@ -140,8 +134,6 @@ def listify_nested_conf(conf: Any) -> Union[DictConfig, ListConfig]:
         ])
     else:
         return conf
-
-
 
 
 if __name__ == '__main__':

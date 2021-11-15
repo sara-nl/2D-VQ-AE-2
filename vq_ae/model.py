@@ -20,7 +20,6 @@ class VQAE(pl.LightningModule):  # noqa
         loss_f_conf: ModuleConf,
         encoder_conf: ModuleConf,
         decoder_conf: ModuleConf,
-        metrics: Optional[Sequence[ModuleConf]],
         **kwargs
     ):
         super().__init__()
@@ -35,7 +34,6 @@ class VQAE(pl.LightningModule):  # noqa
             ('loss_f', loss_f_conf),
             ('encoder', encoder_conf),
             ('decoder', decoder_conf),
-            ('metrics', metrics)
         ):
             setattr(self, attr_name, instantiate(attr_conf))
 
