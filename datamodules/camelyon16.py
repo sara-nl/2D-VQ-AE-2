@@ -1,9 +1,14 @@
+from __future__ import annotations
+
 import bisect
 import functools
+from functools import reduce
+from operator import xor
 from dataclasses import dataclass
-from itertools import chain, zip_longest
+from itertools import chain, product, starmap, zip_longest
 from pathlib import Path
 from typing import Optional, Tuple
+from collections.abc import Sequence
 
 import numpy as np
 import pytorch_lightning as pl
@@ -43,16 +48,26 @@ class CAMELYON16RandomPatchDataSet(Dataset):
     patch_size: Tuple[int, int]
     n_patches_per_wsi: int
     transforms: Optional[BasicTransform]
-    train: str
+    train: str  # TODO: replace with Enum
     train_frac: float
 
     def __post_init__(self):
-        self.image_paths, self.mask_paths = (
-            _find_image_mask_pairs_paths(self.path, pattern='test')
+        modality_folders = ('images', 'tissue_masks')
+        modality_postfixes = ('', '_tissue')
+
+        find_pairs = functools.partial(
+            _find_image_mask_pairs_paths,
+            path=self.path,
+            modality_folders=modality_folders,
+            modality_postfixes=modality_postfixes
+        )
+
+        self.image_paths, self.tissue_mask_paths = (
+            find_pairs(pattern='test')
             if self.train == 'test'
             else _train_val_split_paths(
                 modality_arrays=tuple(  # type: ignore
-                    _find_image_mask_pairs_paths(self.path, pattern=pattern)
+                    find_pairs(pattern=pattern)
                     for pattern in ('normal', 'tumor')
                 ),
                 split_frac=self.train_frac,
@@ -96,7 +111,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
 
         image, mask = (
             ImageReader(modality_paths[wsi_index], self.spacing_tolerance)
-            for modality_paths in (self.image_paths, self.mask_paths)
+            for modality_paths in (self.image_paths, self.tissue_mask_paths)
         )
 
         patch = self.__cascade_sampler(image, mask)
@@ -119,16 +134,26 @@ class CAMELYON16SlicePatchDataSet(Dataset):
         spacing_tolerance: float,
         patch_size: Tuple[int, int],
         transforms: Optional[BasicTransform],
-        train: str,
+        train: str,  # TODO: replace with enum
         train_frac: float,
         **throwaway_kwargs
     ):
-        self.image_paths, _ = (
-            _find_image_mask_pairs_paths(self.path, pattern='test')
+        modality_folders = ('images', 'masks')
+        modality_postfixes = ('', '_mask')
+
+        find_pairs = functools.partial(
+            _find_image_mask_pairs_paths,
+            path=path,
+            modality_folders=modality_folders,
+            modality_postfixes=modality_postfixes
+        )
+
+        self.image_paths, self.mask_paths = (
+            find_pairs(pattern='test')
             if train == 'test'
             else _train_val_split_paths(
                 modality_arrays=tuple(  # type: ignore
-                    _find_image_mask_pairs_paths(path, pattern=pattern)
+                    find_pairs(pattern=pattern)
                     for pattern in ('normal', 'tumor')
                 ),
                 split_frac=train_frac,
@@ -162,11 +187,10 @@ class CAMELYON16SlicePatchDataSet(Dataset):
             ]
         ) // self.patch_size
 
-    def __getitem__(self, index) -> Tuple[np.ndarray, np.ndarray]:
+    def __getitem__(self, index) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Get a non-overlapping image patch of size self.image_patch
 
-        :param index:
         :return:
             - Image patch
             - Patch indices w.r.t. the original image
@@ -179,14 +203,17 @@ class CAMELYON16SlicePatchDataSet(Dataset):
             patch_index %  self._sizes[img_index, 0]  # noqa[E222]
         )) * self.patch_size
 
-        return (  # type: ignore
-            ImageReader(self.image_paths[img_index], self.spacing_tolerance).read(
+        img_path = self.image_paths[img_index]
+        patch = ImageReader(img_path, self.spacing_tolerance).read(
                 self.spacing,
                 *patch_indices,  # row, col
                 *self.patch_size,  # height, width,
                 normalized=True
-            ),
-            patch_indices
+        )
+
+        return (  # type: ignore
+            patch if self.transforms is None else self.transforms(image=patch)['image'],
+            (patch_indices, img_path)
         )
 
 
@@ -232,32 +259,47 @@ def _train_val_split_paths(
 def _find_image_mask_pairs_paths(
     path: str,
     pattern: str,
-    modalities: Tuple[str, str] = ('images', 'tissue_masks')
-) -> Tuple[np.ndarray, np.ndarray]:
-    image_paths, mask_paths = (
+    modality_folders: Sequence[str] = ('images', 'masks', 'tissue_masks'),
+    modality_postfixes: Sequence[str] = ('', '_mask', '_tissue')
+) -> Sequence[np.ndarray]:
+    assert len(modality_folders) == len(modality_postfixes)
+
+    paths = [
         list(Path(path).glob(f'{modality}/*{pattern}*.tif'))
-        for modality in modalities
-    )
+        for modality in modality_folders
+    ]
 
-    def assert_matching_paths(image_paths_, mask_paths_):
+    def assert_matching_paths(modality_paths, postfixes):
         """asserting that image and mask names line up"""
-        fault = False
-        mask_name_set = set(map(lambda path_: path_.stem[:-7], mask_paths_))
-        for image_name in map(lambda path_: path_.stem, image_paths_):
-            try:
-                mask_name_set.remove(image_name)
-            except KeyError:
-                fault = True
-                print(f"Error: {image_name} does not have an associated tissue mask!")
-        for mask_name in iter(mask_name_set):  # if any mask is left-over
-            fault = True
-            print(f"Error: {mask_name} does not have an associated WSI!")
-        if fault:
-            raise ValueError('WSI/Mask mismatch.')
 
-    assert_matching_paths(image_paths, mask_paths)
+        def refine_scan_path(scan_path, postfix):
+            if len(postfix) == 0:
+                return scan_path.stem
+
+            if not scan_path.stem[-len(postfix):] == postfix:
+                raise ValueError(f"{scan_path.stem} does not have postfix {postfix}")
+
+            return scan_path.stem[:-len(postfix)]
+
+        scan_names = [
+            set(refine_scan_path(scan_path, postfix) for scan_path in modality_path)
+            for modality_path, postfix in zip(modality_paths, postfixes)
+        ]
+
+        # Practically: (A ^ B) ^ (A ^ C) ^ ...
+        difference = reduce(xor, (starmap(xor, product((scan_names[0],), scan_names[1:]))))
+
+        if len(difference) != 0:
+            raise ValueError(
+                f"Scan(s) {difference} do not have all associated modalities. "
+                f"Please check these are present in all {modality_folders} subfolders"
+                f"with name postfixes {modality_postfixes}"
+            )
+
+    if len(paths) > 1:
+        assert_matching_paths(paths, modality_postfixes)
 
     return tuple(  # type: ignore
         np.sort(list(map(str, modality_paths)))
-        for modality_paths in (image_paths, mask_paths)
+        for modality_paths in paths
     )
