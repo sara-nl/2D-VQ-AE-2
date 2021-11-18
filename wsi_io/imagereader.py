@@ -438,7 +438,8 @@ class ImageReader(object):
 
     def read(self, spacing, row, col, height, width, normalized=True):
         """
-        Load a patch from the opened image from the best matching level for the given pixel spacing. The indices are interpreted at the given level. (Not on level 0.)
+        Load a patch from the opened image from the best matching level for the given pixel spacing.
+        The indices are interpreted at the given level. (Not on level 0.)
 
         Args:
             spacing (float): Pixel spacing to use to find the target level (micrometer).
@@ -459,18 +460,17 @@ class ImageReader(object):
         level = self.level(spacing=spacing)
 
         if normalized:
-            col, row, width, height = (
+            col, row = (
                 col * self.__downsamplings[level],
                 row * self.__downsamplings[level],
-                min(width,  self.__shapes[level][1] - col),
-                min(height, self.__shapes[level][0] - row)
+                # min(width,  self.__shapes[level][1] - col),
+                # min(height, self.__shapes[level][0] - row)
             )
 
         # explicitely cast to int, as e.g. int64 is not allowed
         col, row, width, height = map(int, (col, row, width, height))
 
         patch = self.__patch(startX=col, startY=row, width=width, height=height, level=level)
-
 
         # patch = patch.transpose(2, 0, 1)
 

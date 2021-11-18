@@ -187,33 +187,44 @@ class CAMELYON16SlicePatchDataSet(Dataset):
             ]
         ) // self.patch_size
 
+    @functools.lru_cache(maxsize=1)
+    def _get_paths(self, index):
+        return self.image_paths[index], self.mask_paths[index]
+
     def __getitem__(self, index) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
         Get a non-overlapping image patch of size self.image_patch
 
         :return:
             - Image patch
+            - Image patch labels
+            -
             - Patch indices w.r.t. the original image
         """
-        img_index: np.int = bisect.bisect_left(self._cum_lengths, index)
-        patch_index = index - (self._cum_lengths[img_index-1] if index != 0 else 0)
+        img_index: np.int = bisect.bisect(self._cum_lengths, index)
+        patch_index = index - (self._cum_lengths[img_index-1] if img_index != 0 else 0)
 
         patch_indices = np.asarray((
             patch_index // self._sizes[img_index, 1],
-            patch_index %  self._sizes[img_index, 0]  # noqa[E222]
-        )) * self.patch_size
+            patch_index %  self._sizes[img_index, 1]  # noqa[E222]
+        ))
 
-        img_path = self.image_paths[img_index]
-        patch = ImageReader(img_path, self.spacing_tolerance).read(
+        paths = self._get_paths(img_index)
+        patch, labels = (
+            ImageReader(path, self.spacing_tolerance).read(
                 self.spacing,
-                *patch_indices,  # row, col
+                *(patch_indices * self.patch_size),  # row, col
                 *self.patch_size,  # height, width,
                 normalized=True
+            )
+            for path in paths
         )
 
         return (  # type: ignore
-            patch if self.transforms is None else self.transforms(image=patch)['image'],
-            (patch_indices, img_path)
+            *((patch, labels)
+              if self.transforms is None
+              else self.transforms(image=patch, mask=labels)).values(),
+            (img_index, patch_indices, *paths)
         )
 
 
