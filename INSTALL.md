@@ -9,3 +9,6 @@
 # ASAP usage
 ASAP (https://github.com/computationalpathologygroup/ASAP) is not in `environment.yml`  
 Please install it yourself.
+
+In Snellius/Lisa, ASAP2.0 is available under `ASAP/2.0-foss-2021a-CUDA-11.3.1`, i.e.:  
+`module load 2021 ASAP/2.0-foss-2021a-CUDA-11.3.1`
