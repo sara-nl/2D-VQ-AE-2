@@ -138,8 +138,8 @@ class CAMELYON16SlicePatchDataSet(Dataset):
         train_frac: float,
         **throwaway_kwargs
     ):
-        modality_folders = ('images', 'masks')
-        modality_postfixes = ('', '_mask')
+        modality_folders = ('images', 'masks', 'tissue_masks')
+        modality_postfixes = ('', '_mask', '_tissue')
 
         find_pairs = functools.partial(
             _find_image_mask_pairs_paths,
@@ -148,7 +148,7 @@ class CAMELYON16SlicePatchDataSet(Dataset):
             modality_postfixes=modality_postfixes
         )
 
-        self.image_paths, self.mask_paths = (
+        self.image_paths, self.mask_paths, self.tissue_mask_paths = (
             find_pairs(pattern='test')
             if train == 'test'
             else _train_val_split_paths(
@@ -189,7 +189,7 @@ class CAMELYON16SlicePatchDataSet(Dataset):
 
     @functools.lru_cache(maxsize=1)
     def _get_paths(self, index):
-        return self.image_paths[index], self.mask_paths[index]
+        return self.image_paths[index], self.mask_paths[index], self.tissue_mask_paths[index]
 
     def __getitem__(self, index) -> Tuple[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
         """
@@ -209,8 +209,8 @@ class CAMELYON16SlicePatchDataSet(Dataset):
             patch_index %  self._sizes[img_index, 1]  # noqa[E222]
         ))
 
-        paths = self._get_paths(img_index)
-        patch, labels = (
+        paths = self._get_paths(img_index)[:2]  #  img, mask, _
+        patch, label = (
             ImageReader(path, self.spacing_tolerance).read(
                 self.spacing,
                 *(patch_indices * self.patch_size),  # row, col
@@ -221,9 +221,12 @@ class CAMELYON16SlicePatchDataSet(Dataset):
         )
 
         return (  # type: ignore
-            *((patch, labels)
+            *((patch, label)
               if self.transforms is None
-              else self.transforms(image=patch, mask=labels)).values(),
+              else (
+                (transformed := self.transforms(image=patch, mask=label))['image'],
+                transformed['mask']
+              )),
             (img_index, patch_indices, *paths)
         )
 
@@ -241,23 +244,19 @@ def _train_val_split_paths(
     This function is obviously extremely overengineered.
     """
     assert mode in ('train', 'validation')
-
     temp = []
-    for images, masks in modality_arrays:
-
+    for modality_array in modality_arrays:
         length, split_index = (
-            (ln := len(images)),
+            (ln := len(modality_array[0])),
             tf if 0 < (tf := round(ln * split_frac)) < ln
             else 1 if tf == 0
             else tf - 1
         )
 
-        temp.append(
-            [
-                elem[(slice(split_index) if mode == 'train' else slice(split_index, length))]
-                for elem in (images, masks)
-            ]
-        )
+        temp.append([
+            elem[(slice(split_index) if mode == 'train' else slice(split_index, length))]
+            for elem in modality_array
+        ])
 
     return tuple(  # type: ignore
         map(
