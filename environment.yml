@@ -269,5 +269,16 @@ dependencies:
   - zstd=1.4.9=haebb681_0
   - pip:
     - antlr4-python3-runtime==4.8
+    - autopage==0.4.0
+    - cliff==3.9.0
+    - cmaes==0.8.2
+    - cmd2==2.3.1
+    - colorlog==6.6.0
     - hydra-core==1.2.0.dev1
+    - hydra-optuna-sweeper==1.2.0.dev1
+    - hydra-submitit-launcher==1.2.0.dev1
+    - optuna==2.10.0
+    - prettytable==2.4.0
+    - pyperclip==1.8.2
+    - stevedore==3.5.0
 prefix: /home/robertsc/.conda/envs/2D-VQ-AE-2

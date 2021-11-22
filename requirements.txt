@@ -7,6 +7,7 @@ appdirs==1.4.4
 asn1crypto==1.4.0
 async-timeout==3.0.1
 attrs==21.2.0
+autopage==0.4.0
 backports.functools-lru-cache==1.6.4
 blinker==1.4
 bokeh==2.4.1
@@ -18,7 +19,11 @@ cffi==1.14.6
 chardet==4.0.0
 charset-normalizer==2.0.4
 click==8.0.3
+cliff==3.9.0
 cloudpickle==2.0.0
+cmaes==0.8.2
+cmd2==2.3.1
+colorlog==6.6.0
 conda==4.10.3
 conda-package-handling==1.7.3
 configparser==5.0.2
@@ -44,6 +49,8 @@ grpcio==1.38.1
 gunicorn==20.1.0
 HeapDict==1.0.1
 hydra-core==1.2.0.dev1
+hydra-optuna-sweeper==1.2.0.dev1
+hydra-submitit-launcher==1.2.0.dev1
 idna==3.2
 imagecodecs==2021.8.26
 imageio==2.9.0
@@ -71,12 +78,14 @@ numpy==1.20.3
 oauthlib==3.1.1
 olefile==0.46
 omegaconf==2.1.1
+optuna==2.10.0
 packaging==21.0
 pandas==1.2.4
 partd==1.2.0
 pbr==5.7.0
 Pillow==8.4.0
 pip==21.2.4
+prettytable==2.4.0
 prometheus-client==0.11.0
 prometheus-flask-exporter==0.18.5
 protobuf==3.16.0
@@ -90,6 +99,7 @@ pyDeprecate==0.3.1
 PyJWT==2.1.0
 pyOpenSSL==21.0.0
 pyparsing==3.0.4
+pyperclip==1.8.2
 PySocks==1.7.1
 python-dateutil==2.8.2
 python-editor==1.0.4
@@ -111,6 +121,7 @@ smmap==4.0.0
 sortedcontainers==2.4.0
 SQLAlchemy==1.3.23
 sqlparse==0.4.1
+stevedore==3.5.0
 submitit==1.2.1
 tabulate==0.8.9
 tblib==1.7.0
