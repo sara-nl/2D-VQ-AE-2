@@ -2,6 +2,7 @@
 `pip install .`  
 
 `git clone https://github.com/sara-nl/hydra-2.0`  
+`pip install hydra-2.0/`
 `pip install hydra-2.0/plugins/hydra_submitit_launcher/`  
 `pip install hydra-2.0/plugins/hydra_optuna_sweeper/`
 
