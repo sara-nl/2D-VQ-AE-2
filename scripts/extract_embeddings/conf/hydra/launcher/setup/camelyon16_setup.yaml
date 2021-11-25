@@ -1,0 +1,19 @@
+- set -e
+
+- echo "Loading modules"
+# TODO: remove this hacky relative path finding
+- source ${hydra.runtime.config_sources.1.path}/../../load-asap.sh
+
+- echo "Setting environment variables"
+- export OMP_NUM_THREADS=18
+- export PYTHONFAULTHANDLER=1
+- export NCCL_DEBUG=INFO
+- export NCCL_ASYNC_ERROR_HANDLING=1
+
+- if [[ -d ${oc.env:CAMELYON16_PATH} ]]; then
+- echo "Detected folder ${oc.env:CAMELYON16_PATH}, skipping copy"
+- else
+- echo "${oc.env:CAMELYON16_PATH} is not a valid file"
+- exit 1
+- fi
+

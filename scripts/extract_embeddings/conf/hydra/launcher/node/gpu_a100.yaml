@@ -1,0 +1,5 @@
+timeout_min: 7200 # 5 days
+partition: 'gpu'
+cpus_per_task: 18
+tasks_per_node: 4
+gpus_per_node: 4

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import functools
+import logging
 from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import partial
@@ -50,6 +51,13 @@ def get_encodings(
             for dim in (torch.cat([patch_idx[None], patch_idx[None]+1]).T.swapaxes(0, 1) * patch_size)
         ])
 
+    def cast_to_lowest_dtype(array: np.ndarray) -> np.ndarray:
+        return array.astype(
+            bool
+            if (array_min := array.min()) == 0 and (array_max := array.max()) == 1
+            else np.result_type(*map(np.min_scalar_type, (array_min, array_max)))
+        )
+
     arrays, counts, patch_size = {}, {}, None
 
     for ret_values in run_eval(model, dataset):
@@ -60,8 +68,8 @@ def get_encodings(
 
             slices = get_slices(patch_idx)
 
-            u_names, u_idx, u_inverse, u_counts = np.unique(
-                names, return_counts=True, return_index=True, return_inverse=True
+            u_names, u_idx, u_counts = np.unique(
+                names, return_counts=True, return_index=True
             )
 
             for name, image_index, count in zip(u_names, img_idx[u_idx], u_counts):
@@ -72,23 +80,23 @@ def get_encodings(
                     device=encodings.device
                 ))
 
-                mask = u_inverse == int(image_index)
+                mask = img_idx == image_index
                 current_array[slices[mask].swapaxes(0, 1)] = encodings[mask]
                 current_count -= count  # persistent because of np.array
 
                 if current_count == 0:
                     counts.pop(name)
-                    yield name, (arr := arrays.pop(name).cpu().numpy()).astype(np.min_scalar_type(arr.max()))
+                    yield name, cast_to_lowest_dtype(arrays.pop(name).cpu().numpy())
 
 
 @torch.no_grad()
-def run_eval(model, dataset, batch_size=1800):
+def run_eval(model, dataset, batch_size=2500):
 
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
         pin_memory=True,
-        num_workers=6,
+        num_workers=18,
         prefetch_factor=10
     )
 
@@ -103,11 +111,13 @@ def run_eval(model, dataset, batch_size=1800):
 
     max_pool = None
 
+    logging.info("Setup complete, starting encoding")
+
     for imgs, labels, (img_index, patch_index, img_path, label_path) in dataloader:
 
         imgs, labels = (
-            imgs.to(device, non_blocking=True, dtype=torch.half),
-            labels.to(device, non_blocking=True, dtype=torch.int16)
+            imgs.to(device, non_blocking=True),
+            labels.to(device, non_blocking=True)
         )
 
         with torch.autocast('cuda'):
@@ -121,7 +131,7 @@ def run_eval(model, dataset, batch_size=1800):
         yield (
             (data, list(map(extract_path, paths)), img_index, patch_index)
             for data, paths in (
-                (encoding_indices.to(torch.int16), img_path),  # make a ndim < 2**15 assumption
+                (encoding_indices, img_path),
                 (labels_pooled, label_path)
             )
         )

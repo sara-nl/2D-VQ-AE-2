@@ -1,3 +1,6 @@
+defaults:
+  - override hydra/launcher: submitit_snellius
+
 run_path: ???
 force_outputs_or_multirun_root: True
 dataset_target_hotswap: datamodules.camelyon16.CAMELYON16SlicePatchDataSet
