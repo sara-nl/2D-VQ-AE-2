@@ -5,7 +5,7 @@ from hydra.utils import call, instantiate
 from omegaconf import OmegaConf
 
 
-@hydra.main(config_path="../conf", config_name="camelyon16_config")
+@hydra.main(config_path="../conf", config_name="vq_ae_camelyon16_config")
 def main(experiment):
     torch.cuda.empty_cache()
 

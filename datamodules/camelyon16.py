@@ -1,43 +1,18 @@
-from __future__ import annotations
-
 import bisect
 import functools
-from functools import reduce
-from operator import xor
+from collections.abc import Sequence
 from dataclasses import dataclass
+from functools import reduce
 from itertools import chain, product, starmap, zip_longest
+from operator import xor
 from pathlib import Path
 from typing import Optional, Tuple
-from collections.abc import Sequence
 
 import numpy as np
-import pytorch_lightning as pl
 from albumentations import BasicTransform
-from hydra.utils import instantiate
 from torch.utils.data import Dataset
-from torch.utils.data.dataloader import DataLoader
 
-from utils.conf_helpers import DataloaderConf
 from wsi_io.imagereader import ImageReader
-
-
-@dataclass
-class DefaultDataModule(pl.LightningDataModule):
-    train_dataloader_conf: DataloaderConf
-    val_dataloader_conf: DataloaderConf
-    test_dataloader_conf: Optional[DataloaderConf] = None
-
-    def __post_init__(self):
-        super().__init__()
-
-    def train_dataloader(self) -> DataLoader:
-        return instantiate(self.train_dataloader_conf)
-
-    def val_dataloader(self) -> DataLoader:
-        return instantiate(self.val_dataloader_conf)
-
-    def test_dataloader(self) -> DataLoader:
-        return instantiate(self.test_dataloader_conf)
 
 
 @dataclass
@@ -209,7 +184,7 @@ class CAMELYON16SlicePatchDataSet(Dataset):
             patch_index %  self._sizes[img_index, 1]  # noqa[E222]
         ))
 
-        paths = self._get_paths(img_index)[:2]  #  img, mask, _
+        paths = self._get_paths(img_index)[:2]  # img, mask, _
         patch, label = (
             ImageReader(path, self.spacing_tolerance).read(
                 self.spacing,
