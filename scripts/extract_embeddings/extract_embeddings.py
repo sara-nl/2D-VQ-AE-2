@@ -90,7 +90,7 @@ def get_encodings(
 
 
 @torch.no_grad()
-def run_eval(model, dataset, batch_size=2500):
+def run_eval(model, dataset, batch_size=2000):
 
     dataloader = DataLoader(
         dataset,
