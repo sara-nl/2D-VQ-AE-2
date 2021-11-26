@@ -1,0 +1,9 @@
+
+run_path: ${oc.env:CAMELYON16_EMBEDDINGS_PATH}
+
+hydra:
+  job:
+    env_set:
+      HYDRA_FULL_ERROR: "1"
+    env_copy:
+      - CAMELYON16_EMBEDDINGS_PATH
