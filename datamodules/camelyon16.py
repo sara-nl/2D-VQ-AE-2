@@ -8,6 +8,7 @@ from operator import xor
 from pathlib import Path
 from typing import Optional, Tuple
 
+import h5py
 import numpy as np
 from albumentations import BasicTransform
 from torch.utils.data import Dataset
@@ -103,15 +104,15 @@ class CAMELYON16SlicePatchDataSet(Dataset):
     """
 
     def __init__(
-        self,
-        path: str,
-        spacing: float,
-        spacing_tolerance: float,
-        patch_size: Tuple[int, int],
-        transforms: Optional[BasicTransform],
-        train: str,  # TODO: replace with enum
-        train_frac: float,
-        **throwaway_kwargs
+            self,
+            path: str,
+            spacing: float,
+            spacing_tolerance: float,
+            patch_size: Tuple[int, int],
+            transforms: Optional[BasicTransform],
+            train: str,  # TODO: replace with enum
+            train_frac: float,
+            **throwaway_kwargs
     ):
         modality_folders = ('images', 'masks', 'tissue_masks')
         modality_postfixes = ('', '_mask', '_tissue')
@@ -177,11 +178,11 @@ class CAMELYON16SlicePatchDataSet(Dataset):
             - Patch indices w.r.t. the original image
         """
         img_index: np.int = bisect.bisect(self._cum_lengths, index)
-        patch_index = index - (self._cum_lengths[img_index-1] if img_index != 0 else 0)
+        patch_index = index - (self._cum_lengths[img_index - 1] if img_index != 0 else 0)
 
         patch_indices = np.asarray((
             patch_index // self._sizes[img_index, 1],
-            patch_index %  self._sizes[img_index, 1]  # noqa[E222]
+            patch_index % self._sizes[img_index, 1]  # noqa[E222]
         ))
 
         paths = self._get_paths(img_index)[:2]  # img, mask, _
@@ -201,20 +202,75 @@ class CAMELYON16SlicePatchDataSet(Dataset):
               else (
                 (transformed := self.transforms(image=patch, mask=label))['image'],
                 transformed['mask']
-              )),
+            )),
             (img_index, patch_indices, *paths)
         )
 
 
+class CAMELYON16EmbeddingsDataset(Dataset):
+    """
+    Dataset which loads the CAMELYON16 embeddings from a .hdf5 file:
+    """
+
+    def __init__(
+            self,
+            path: str,
+            transforms: Optional[BasicTransform],
+            train: str,  # TODO: replace with enum
+            train_frac: float
+    ):
+        hdf5_database = h5py.File(path, mode='r')
+        assert 'images' in hdf5_database and 'masks' in hdf5_database
+        img_db, mask_db = hdf5_database['images'], hdf5_database['masks']
+
+        def get_scans_from_db(pattern: str):
+            return np.asarray([
+                (img_db[key], mask_db[key + '_mask'])
+                for key in np.sort(list(img_db.keys()))
+                if pattern in key
+            ]).T
+
+        # Getting all the h5 files back to numpy requires calling np.asarray on each individual value,
+        # which is the reason that the iteration logic below is such a mess
+        self.images, self.masks = (
+            np.asarray(list(map(np.asarray, elem))) for elem in (
+                get_scans_from_db(pattern='test')
+                if train == 'test'
+                else _train_val_split_paths([
+                    get_scans_from_db(modality)
+                    for modality in ('normal', 'tumor')
+                ], split_frac=train_frac, mode=train)
+            )
+        )
+
+        self.transforms = transforms
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, index):
+        image, mask = self.images[index], self.masks[index]
+
+        return (
+            (image, mask) if self.transforms is None
+            else (
+                (transformed := self.transforms(image=self.images[index], mask=self.masks[index]))['image'],
+                transformed['mask']
+            )
+        )
+
+
 def _train_val_split_paths(
-    modality_arrays: Tuple[Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray]],
-    split_frac: float,
-    mode: str,  # train or validation
-) -> Tuple[np.ndarray, np.ndarray]:  # Tuple[images, masks]
+        modality_arrays: Sequence[Tuple[np.ndarray, np.ndarray]],  # Sequence[Tuple[images, masks]]
+        split_frac: float,
+        mode: str,  # train or validation
+) -> Tuple[np.ndarray, ...]:  # Tuple[images, masks]
     """
     practically: merge n lists of (possibly unequal) size, also based on `split_frac`:
     [(a, a), (b, b)], [(c,),(d,)] into
     [(a, c), (a,)],   [(b, d), (b,)]
+
+    'Modality' refers to types of scans, e.g.: cancer/non-cancer
 
     This function is obviously extremely overengineered.
     """
@@ -242,10 +298,10 @@ def _train_val_split_paths(
 
 
 def _find_image_mask_pairs_paths(
-    path: str,
-    pattern: str,
-    modality_folders: Sequence[str] = ('images', 'masks', 'tissue_masks'),
-    modality_postfixes: Sequence[str] = ('', '_mask', '_tissue')
+        path: str,
+        pattern: str,
+        modality_folders: Sequence[str] = ('images', 'masks', 'tissue_masks'),
+        modality_postfixes: Sequence[str] = ('', '_mask', '_tissue')
 ) -> Sequence[np.ndarray]:
     assert len(modality_folders) == len(modality_postfixes)
 
@@ -288,3 +344,14 @@ def _find_image_mask_pairs_paths(
         np.sort(list(map(str, modality_paths)))
         for modality_paths in paths
     )
+
+
+if __name__ == '__main__':
+    print("starting")
+    dataset = CAMELYON16EmbeddingsDataset(
+        path='/home/robertsc/2D-VQ-AE-2/vq_ae/multirun/2021-11-01/13-43-06/3/encodings.hdf5',
+        transforms=None,
+        train='train',
+        train_frac=0.95
+    )
+    print(dataset[0])
