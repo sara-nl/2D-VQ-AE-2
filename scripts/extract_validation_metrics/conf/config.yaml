@@ -1,0 +1,11 @@
+
+checkpoint_dir: ???
+
+hydra_config_name: ${checkpoint_dir}/.hydra
+
+hydra:
+  job:
+    env_set:
+      HYDRA_FULL_ERROR: "1"
+    env_copy:
+      - CAMELYON16_PATH

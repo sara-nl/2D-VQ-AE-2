@@ -1,6 +1,7 @@
 name: 2D-VQ-AE-2
 channels:
   - pytorch
+  - anaconda
   - defaults
   - conda-forge
 dependencies:
@@ -11,10 +12,12 @@ dependencies:
   - albumentations=1.0.3=pyhd8ed1ab_0
   - alembic=1.3.1=py_0
   - alsa-lib=1.2.3=h516909a_0
+  - antlr-python-runtime=4.9.3=pyhd8ed1ab_1
   - appdirs=1.4.4=pyhd3eb1b0_0
   - asn1crypto=1.4.0=py_0
   - async-timeout=3.0.1=py39h06a4308_0
   - attrs=21.2.0=pyhd3eb1b0_0
+  - backcall=0.2.0=py_0
   - backports=1.0=py_2
   - backports.functools_lru_cache=1.6.4=pyhd8ed1ab_0
   - blas=1.0=mkl
@@ -29,7 +32,7 @@ dependencies:
   - ca-certificates=2021.10.26=h06a4308_2
   - cachetools=4.2.2=pyhd3eb1b0_0
   - cairo=1.16.0=h6cf1ce9_1008
-  - certifi=2021.10.8=py39h06a4308_0
+  - certifi=2021.10.8=py39h06a4308_2
   - cffi=1.14.6=py39h400218f_0
   - cfitsio=3.470=hf0d0db6_6
   - chardet=4.0.0=py39h06a4308_1003
@@ -37,7 +40,7 @@ dependencies:
   - charset-normalizer=2.0.4=pyhd3eb1b0_0
   - click=8.0.3=pyhd3eb1b0_0
   - cloudpickle=2.0.0=pyhd3eb1b0_0
-  - conda=4.10.3=py39h06a4308_0
+  - conda=4.11.0=py39h06a4308_0
   - conda-package-handling=1.7.3=py39h27cfd23_1
   - configparser=5.0.2=pyhd3eb1b0_0
   - cryptography=3.4.8=py39hd23ed53_0
@@ -49,6 +52,7 @@ dependencies:
   - databricks-cli=0.12.1=pyhd8ed1ab_0
   - dataclasses=0.8=pyh6d0b6a4_7
   - dbus=1.13.6=h48d8840_2
+  - decorator=4.4.2=py_0
   - distributed=2021.10.0=py39h06a4308_0
   - docker-py=4.4.1=py39h06a4308_5
   - docker-pycreds=0.4.0=pyhd3eb1b0_0
@@ -77,6 +81,7 @@ dependencies:
   - gst-plugins-base=1.18.4=hf529b03_2
   - gstreamer=1.18.4=h76c114f_2
   - gunicorn=20.1.0=py39h06a4308_0
+  - h5py=3.6.0=py39ha0f2276_0
   - harfbuzz=2.8.2=h83ec7ef_0
   - hdf5=1.10.6=nompi_h7c3c948_1111
   - heapdict=1.0.1=pyhd3eb1b0_0
@@ -87,8 +92,10 @@ dependencies:
   - imgaug=0.4.0=py_1
   - importlib_resources=5.4.0=pyhd8ed1ab_0
   - intel-openmp=2021.4.0=h06a4308_3561
+  - ipython=7.29.0=py39hb070fc8_0
   - itsdangerous=2.0.1=pyhd3eb1b0_0
   - jasper=1.900.1=h07fcdf6_1006
+  - jedi=0.18.0=py39h06a4308_1
   - jinja2=3.0.2=pyhd3eb1b0_0
   - joblib=1.0.1=pyhd8ed1ab_0
   - jpeg=9d=h7f8727e_0
@@ -151,6 +158,7 @@ dependencies:
   - markdown=3.2.1=py_0
   - markupsafe=2.0.1=py39h27cfd23_0
   - matplotlib-base=3.4.3=py39hbbc1b5f_0
+  - matplotlib-inline=0.1.2=pyhd3eb1b0_2
   - mkl=2021.4.0=h06a4308_640
   - mlflow=1.19.0=py39ha39b057_0
   - msgpack-python=1.0.2=py39hff7bd54_1
@@ -171,26 +179,32 @@ dependencies:
   - opencv=4.5.1=py39hf3d152e_0
   - openh264=2.1.1=h780b84a_0
   - openjpeg=2.4.0=h3ad879b_0
-  - openssl=1.1.1l=h7f8727e_0
+  - openssl=1.1.1m=h7f8727e_0
   - packaging=21.0=pyhd3eb1b0_0
   - pandas=1.2.4=py39h2531618_0
+  - parso=0.8.0=py_0
   - partd=1.2.0=pyhd3eb1b0_0
   - pbr=5.7.0=pyhd8ed1ab_0
   - pcre=8.45=h9c3ff4c_0
+  - pexpect=4.8.0=pyhd3eb1b0_3
+  - pickleshare=0.7.5=pyhd3eb1b0_1003
   - pillow=8.4.0=py39h5aabda8_0
   - pip=21.2.4=py39h06a4308_0
   - pixman=0.40.0=h36c2ea0_0
   - prometheus_client=0.11.0=pyhd3eb1b0_0
   - prometheus_flask_exporter=0.18.5=pyhd8ed1ab_0
+  - prompt-toolkit=3.0.8=py_0
   - protobuf=3.16.0=py39he80948d_0
   - psutil=5.8.0=py39h27cfd23_1
   - pthread-stubs=0.4=h36c2ea0_1001
+  - ptyprocess=0.7.0=pyhd3eb1b0_2
   - py-opencv=4.5.1=py39hef51801_0
   - pyasn1=0.4.8=pyhd3eb1b0_0
   - pyasn1-modules=0.2.8=py_0
   - pycosat=0.6.3=py39h27cfd23_0
   - pycparser=2.20=py_2
   - pydeprecate=0.3.1=pyhd8ed1ab_0
+  - pygments=2.7.1=py_0
   - pyjwt=2.1.0=py39h06a4308_0
   - pyopenssl=21.0.0=pyhd3eb1b0_1
   - pyparsing=3.0.4=pyhd3eb1b0_0
@@ -235,10 +249,11 @@ dependencies:
   - tifffile=2021.7.2=pyhd3eb1b0_2
   - tk=8.6.11=h1ccaba5_0
   - toolz=0.11.1=pyhd3eb1b0_0
-  - torchmetrics=0.6.0=pyhd8ed1ab_0
+  - torchmetrics=0.6.2=pyhd8ed1ab_0
   - torchvision=0.11.1=py39_cu113
   - tornado=6.1=py39h27cfd23_0
   - tqdm=4.62.3=pyhd3eb1b0_1
+  - traitlets=5.1.1=pyhd3eb1b0_0
   - typing-extensions=3.10.0.2=hd3eb1b0_0
   - typing_extensions=3.10.0.2=pyh06a4308_0
   - tzdata=2021e=hda174b7_0
@@ -270,11 +285,10 @@ dependencies:
   - pip:
     - antlr4-python3-runtime==4.8
     - autopage==0.4.0
-    - cliff==3.9.0
+    - cliff==3.10.0
     - cmaes==0.8.2
-    - cmd2==2.3.1
+    - cmd2==2.3.3
     - colorlog==6.6.0
-    - hydra-core==1.2.0.dev1
     - hydra-optuna-sweeper==1.2.0.dev1
     - hydra-submitit-launcher==1.2.0.dev1
     - optuna==2.10.0

@@ -39,6 +39,7 @@ class VQAE(pl.LightningModule):  # noqa
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+
     def forward(self, data: Tensor) -> Tuple[
         Tensor,
         Sequence[Tensor]
@@ -88,6 +89,10 @@ class VQAE(pl.LightningModule):  # noqa
         )
         for i, l in enumerate(encoding_loss):
             self.log(f'{mode}_encoding_loss_{i}', l, sync_dist=val_or_test)
+
+        if hasattr(self, 'metrics'):
+            for name, metric in self.metrics(batch.float(), out.float()).items():
+                self.log(f'{mode}_{name}', metric)
 
         return recon_loss + sum(encoding_loss)
 
