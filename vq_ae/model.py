@@ -24,7 +24,6 @@ class VQAE(pl.LightningModule):  # noqa
         super().__init__()
         self.save_hyperparameters()
 
-        # torch.autograd.set_detect_anomaly(True)
         self.optim_conf = optim_conf
 
         # init rest of the configs
@@ -38,7 +37,6 @@ class VQAE(pl.LightningModule):  # noqa
 
         for key, value in kwargs.items():
             setattr(self, key, value)
-
 
     def forward(self, data: Tensor) -> Tuple[
         Tensor,
@@ -91,7 +89,7 @@ class VQAE(pl.LightningModule):  # noqa
             self.log(f'{mode}_encoding_loss_{i}', l, sync_dist=val_or_test)
 
         if hasattr(self, 'metrics'):
-            for name, metric in self.metrics(batch.float(), out.float()).items():
+            for name, metric in self.metrics(batch, out).items():
                 self.log(f'{mode}_{name}', metric)
 
         return recon_loss + sum(encoding_loss)

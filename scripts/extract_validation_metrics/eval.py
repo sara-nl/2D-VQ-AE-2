@@ -27,8 +27,8 @@ def main(checkpoint_dirs):
     model: pl.LightningModule = instantiate(
         experiment.model,
         metrics=torchmetrics.MetricCollection([
-            torchmetrics.MeanSquaredError(),
-            torchmetrics.image.PSNR(),
+            # torchmetrics.MeanSquaredError(),
+            # torchmetrics.image.PSNR(),
             torchmetrics.image.SSIM(),
         ])
     )
@@ -37,7 +37,7 @@ def main(checkpoint_dirs):
         assert i != 1, f'more than one folder found in the lightning_logs folder, please check {path}'
         ckpt_path = str([*(path / 'checkpoints').iterdir()][-1])
 
-    with torch.cuda.amp.autocast():
+    with torch.no_grad():
         trainer.validate(model=model, ckpt_path=ckpt_path, datamodule=train_datamodule)
 
 
