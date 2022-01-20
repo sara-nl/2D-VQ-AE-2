@@ -38,7 +38,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
             modality_postfixes=modality_postfixes
         )
 
-        self.image_paths, self.tissue_mask_paths = (
+        self.image_paths, self.tissue_mask_paths = map(np.asarray, (
             find_pairs(pattern='test')
             if self.train == 'test'
             else _train_val_split_paths(
@@ -49,7 +49,7 @@ class CAMELYON16RandomPatchDataSet(Dataset):
                 split_frac=self.train_frac,
                 mode=self.train
             )
-        )
+        ))
 
         self.n_wsi = len(self.image_paths)
         self._length = self.n_wsi * self.n_patches_per_wsi
@@ -124,7 +124,7 @@ class CAMELYON16SlicePatchDataSet(Dataset):
             modality_postfixes=modality_postfixes
         )
 
-        self.image_paths, self.mask_paths, self.tissue_mask_paths = (
+        self.image_paths, self.mask_paths, self.tissue_mask_paths = map(np.asarray, (
             find_pairs(pattern='test')
             if train == 'test'
             else _train_val_split_paths(
@@ -135,7 +135,7 @@ class CAMELYON16SlicePatchDataSet(Dataset):
                 split_frac=train_frac,
                 mode=train
             )
-        )
+        ))
 
         self.spacing = spacing
         self.spacing_tolerance = spacing_tolerance
@@ -224,23 +224,21 @@ class CAMELYON16EmbeddingsDataset(Dataset):
         img_db, mask_db = hdf5_database['images'], hdf5_database['masks']
 
         def get_scans_from_db(pattern: str):
-            return np.asarray([
-                (img_db[key], mask_db[key + '_mask'])
+            return tuple(zip(*(
+                tuple(map(np.asarray, (img_db[key], mask_db[key + '_mask'])))
                 for key in np.sort(list(img_db.keys()))
                 if pattern in key
-            ]).T
+            )))
 
         # Getting all the h5 files back to numpy requires calling np.asarray on each individual value,
         # which is the reason that the iteration logic below is such a mess
         self.images, self.masks = (
-            np.asarray(list(map(np.asarray, elem))) for elem in (
-                get_scans_from_db(pattern='test')
-                if train == 'test'
-                else _train_val_split_paths([
-                    get_scans_from_db(modality)
-                    for modality in ('normal', 'tumor')
-                ], split_frac=train_frac, mode=train)
-            )
+            get_scans_from_db(pattern='test')
+            if train == 'test'
+            else _train_val_split_paths([
+                get_scans_from_db(modality)
+                for modality in ('normal', 'tumor')
+            ], split_frac=train_frac, mode=train)
         )
 
         self.transforms = transforms
@@ -264,7 +262,7 @@ def _train_val_split_paths(
         modality_arrays: Sequence[Tuple[np.ndarray, np.ndarray]],  # Sequence[Tuple[images, masks]]
         split_frac: float,
         mode: str,  # train or validation
-) -> Tuple[np.ndarray, ...]:  # Tuple[images, masks]
+) -> Tuple[Tuple[np.ndarray, ...], ...]:  # Tuple[images, masks]
     """
     practically: merge n lists of (possibly unequal) size, also based on `split_frac`:
     [(a, a), (b, b)], [(c,),(d,)] into
@@ -275,24 +273,26 @@ def _train_val_split_paths(
     This function is obviously extremely overengineered.
     """
     assert mode in ('train', 'validation')
-    temp = []
-    for modality_array in modality_arrays:
-        length, split_index = (
-            (ln := len(modality_array[0])),
-            tf if 0 < (tf := round(ln * split_frac)) < ln
-            else 1 if tf == 0
-            else tf - 1
-        )
 
-        temp.append([
-            elem[(slice(split_index) if mode == 'train' else slice(split_index, length))]
-            for elem in modality_array
-        ])
+    def slice_arrays():
+        for modality_array in modality_arrays:
+            length, split_index = (
+                (ln := len(modality_array[0])),
+                tf if 0 < (tf := round(ln * split_frac)) < ln
+                else 1 if tf == 0
+                else tf - 1
+            )
 
-    return tuple(  # type: ignore
+            yield tuple(
+                # return the first n slices if train, else the last 1-n slices
+                image_or_mask[(slice(split_index) if mode == 'train' else slice(split_index, length))]
+                for image_or_mask in modality_array
+            )
+
+    return tuple(
         map(
-            lambda x: np.asarray(list(filter(None, chain.from_iterable(zip_longest(*x))))),
-            zip(*temp)
+            lambda x: tuple(filter(lambda y: y is not None, chain.from_iterable(zip_longest(*x)))),
+            zip(*slice_arrays())
         )
     )
 
