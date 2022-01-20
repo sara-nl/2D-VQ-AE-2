@@ -74,7 +74,7 @@ multidict==5.1.0
 munkres==1.1.4
 networkx==2.6.3
 numexpr==2.7.3
-numpy==1.20.3
+numpy==1.21.0
 oauthlib==3.1.1
 olefile==0.46
 omegaconf==2.1.1
