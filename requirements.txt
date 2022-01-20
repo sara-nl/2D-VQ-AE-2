@@ -99,7 +99,7 @@ pybind11==2.6.2
 pycosat==0.6.3
 pycparser==2.20
 pyDeprecate==0.3.1
-Pygments==2.7.1
+Pygments==2.7.4
 PyJWT==2.1.0
 pyOpenSSL==21.0.0
 pyparsing==3.0.4
