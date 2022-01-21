@@ -53,7 +53,7 @@ imagecodecs==2021.8.26
 imageio==2.9.0
 imgaug==0.4.0
 importlib-resources==5.4.0
-ipython==7.29.0
+ipython==7.31.1
 itsdangerous==2.0.1
 jedi==0.18.0
 Jinja2==3.0.2
