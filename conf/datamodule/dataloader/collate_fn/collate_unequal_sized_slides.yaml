@@ -1,0 +1,4 @@
+_target_: datamodules.camelyon16.collate_unequal_sized_slides
+_partial_: true
+
+mode: random_crop

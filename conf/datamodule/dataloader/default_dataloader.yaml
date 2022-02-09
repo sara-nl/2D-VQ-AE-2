@@ -2,7 +2,8 @@ defaults:
   - dataset: ???
 
 _target_: 'torch.utils.data.DataLoader'
-
+_partial_: true
+  
 batch_size: 32
 shuffle: True
 num_workers: 6

@@ -1,0 +1,6 @@
+defaults:
+  - default_dataloader
+  - collate_fn: collate_unequal_sized_slides
+  - override dataset: camelyon16_embeddings_dataset
+
+_target_: 'torch.utils.data.DataLoader'

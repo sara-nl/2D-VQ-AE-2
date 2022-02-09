@@ -1,0 +1,9 @@
+
+
+_target_: datamodules.camelyon16.CAMELYON16EmbeddingsDataset
+
+path: ${oc.env:CAMELYON16_EMBEDDINGS_PATH}
+
+transforms: null
+train: train
+train_frac: 0.90

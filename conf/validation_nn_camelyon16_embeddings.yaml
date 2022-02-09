@@ -1,0 +1,19 @@
+
+defaults:
+  # - trainer: ddp_trainer
+  # - model: cnn_classifier
+  - datamodule: camelyon16_embeddings_datamodule
+  # - utils: [seed_everything]
+  # - override hydra/launcher: submitit_lisa
+  - _self_
+
+utils:
+  _target_: utils.conf_helpers.instantiate_dictified_listconf
+  _recursive_: False
+
+hydra:
+  job:
+    env_set:
+      HYDRA_FULL_ERROR: "1"
+    env_copy:
+      - CAMELYON16_EMBEDDINGS_PATH
