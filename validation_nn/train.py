@@ -9,9 +9,6 @@ from omegaconf import OmegaConf
 def main(experiment):
     torch.cuda.empty_cache()
 
-    it = iter(instantiate(experiment.datamodule).train_dataloader())
-    out = next(it)
-    breakpoint()
     OmegaConf.save(experiment, 'experiment.yml')
 
     if 'utils' in experiment:

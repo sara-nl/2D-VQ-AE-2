@@ -258,7 +258,7 @@ class CAMELYON16EmbeddingsDataset(Dataset):
         return (
             (image, mask) if self.transforms is None
             else (
-                (transformed := self.transforms(image=self.images[index], mask=self.masks[index]))['image'],
+                (transformed := self.transforms(image=image, mask=mask))['image'],
                 transformed['mask']
             )
         )
@@ -363,6 +363,12 @@ def collate_unequal_sized_slides(batch: Sequence[Tuple[np.ndarray, ...]], mode: 
     assert mode in ('random_crop',)
 
     def crop_to_smallest_size(arrays_to_merge):
+        if all(isinstance(arr, np.ndarray) for arr in arrays_to_merge):
+            stack = lambda arrays: torch.as_tensor(np.stack(arrays))  # noqa[E731]
+        elif all(isinstance(arr, torch.Tensor) for arr in arrays_to_merge):
+            stack = torch.stack
+        else:
+            raise ValueError("All input arrays must either be numpy arrays or torch Tensors")
 
         def get_slices(arr: Sequence[np.ndarray]):
             residuals = (shape := np.asarray(tuple(map(attrgetter('shape'), arr)))) - shape.min(axis=0)
@@ -378,7 +384,7 @@ def collate_unequal_sized_slides(batch: Sequence[Tuple[np.ndarray, ...]], mode: 
                 for idx in crop_start_stop
             )
 
-        return torch.stack(tuple(
+        return stack(tuple(
             array[array_slice]
             for array, array_slice
             in zip(arrays_to_merge, get_slices(arrays_to_merge))

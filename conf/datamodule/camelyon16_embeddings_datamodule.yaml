@@ -2,7 +2,7 @@ defaults:
   - dataloader@train_dataloader_conf: camelyon16_embeddings_dataloader
   - dataloader@val_dataloader_conf: camelyon16_embeddings_dataloader
 
-_target_: 'datamodules.default.DefaultDataModule'
+_target_: datamodules.default.DefaultDataModule
 
 val_dataloader_conf:
   dataset:

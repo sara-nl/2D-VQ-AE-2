@@ -1,0 +1,7 @@
+defaults:
+  - transforms/compose@_here_
+  - override transforms@compose.transforms:
+    - to_tensor_v2
+
+_target_: utils.conf_helpers.instantiate_nested_dictconf
+_recursive_: False # required for the function above
