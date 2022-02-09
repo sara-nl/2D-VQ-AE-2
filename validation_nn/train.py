@@ -19,11 +19,11 @@ def main(experiment):
 
     trainer: pl.Trainer = instantiate(experiment.trainer)
     model: pl.LightningModule = instantiate(experiment.model)
-    train_datamodule: pl.LightningDataModule = instantiate(experiment.train_datamodule)
+    datamodule: pl.LightningDataModule = instantiate(experiment.datamodule)
 
-    trainer.fit(model, train_datamodule)
+    trainer.fit(model, datamodule=datamodule)
 
-    return trainer.callback_metrics['val_recon_loss'].item()
+    return trainer.callback_metrics['val_loss'].item()
 
 
 if __name__ == '__main__':

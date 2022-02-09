@@ -1,18 +1,18 @@
 defaults:
   - plugins: []
-  - callbacks: [progress_bar]
+  - callbacks: [tqdm_progress_bar, model_summary]
+  - logger: tensorboard_logger
 
 _target_: pytorch_lightning.Trainer
 
-gpus: 0
+accelerator: auto
+devices: auto
 
 num_sanity_val_steps: 0
 precision: 32
 
 log_every_n_steps: 50
 val_check_interval: 1.0
-flush_logs_every_n_steps: 100
-weights_summary: full
 
 max_epochs: 1000
 
@@ -23,5 +23,5 @@ plugins:
 callbacks:
   _target_: utils.conf_helpers.instantiate_dictified_listconf
   _recursive_: False
-  progress_bar:
-    refresh_rate: 10 # default 1 is waaaay to fast
+  tqdm_progress_bar:
+    refresh_rate: 10

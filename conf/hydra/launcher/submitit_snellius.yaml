@@ -1,0 +1,3 @@
+defaults:
+  - submitit_slurm
+  - node@_here_: gpu_a100_shared

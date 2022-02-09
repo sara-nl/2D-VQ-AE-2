@@ -1,10 +1,10 @@
 
 defaults:
-  # - trainer: ddp_trainer
-  # - model: cnn_classifier
+  - trainer: ddp_trainer
+  - model: cnn_classifier
   - datamodule: camelyon16_embeddings_datamodule
-  # - utils: [seed_everything]
-  # - override hydra/launcher: submitit_lisa
+  - utils: [seed_everything]
+  - override hydra/launcher: submitit_snellius
   - _self_
 
 utils:

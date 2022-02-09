@@ -1,0 +1,11 @@
+
+_target_: pytorch_lightning.loggers.TensorBoardLogger
+
+save_dir: ${hydra:runtime.cwd}/lightning_logs/
+name: 'default'
+version: null
+log_graph: False
+default_hp_metric: True
+prefix: ''
+sub_dir: null
+
