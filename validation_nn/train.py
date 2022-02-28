@@ -21,7 +21,7 @@ def main(experiment):
     model: pl.LightningModule = instantiate(experiment.model)
     datamodule: pl.LightningDataModule = instantiate(experiment.datamodule)
 
-    trainer.fit(model, datamodule=datamodule)
+    trainer.fit(model, datamodule)
 
     return trainer.callback_metrics['val_loss'].item()
 

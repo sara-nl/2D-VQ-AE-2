@@ -236,8 +236,8 @@ class CAMELYON16EmbeddingsDataset(Dataset):
         # Getting all the h5 files back to numpy requires calling np.asarray on each individual value,
         # which is the reason that the iteration logic below is such a mess
         self.images, self.masks = map(
-            # prefer casting to int16
-            lambda arrays: tuple(arr.astype(np.promote_types(np.int16, arr.dtype), casting='safe') for arr in arrays),
+            # need casting to np.64
+            lambda arrays: tuple(arr.astype(np.promote_types(np.int64, arr.dtype), casting='safe') for arr in arrays),
             (
                 get_scans_from_db(pattern='test')
                 if train == 'test'

@@ -1,0 +1,30 @@
+defaults:
+  - optim: adamw
+  - loss_f: cross_entropy
+  - layers/misc@layers: sequential_from_kwargs
+  - layers/misc@layers.embedding: embedding
+  - layers/misc@layers.flatten_after_embedding: flatten_after_embedding
+  - layers/conv_block/conv_layer@layers.conv1: proj2d
+
+  - optional optional_overrides/optim: ${model/optim}
+
+_target_: validation_nn.model.CNNClassifier
+
+optim:
+  _partial_: true
+  lr: 1e-4
+
+layers:
+  embedding:
+    num_embeddings: 256  # FIXME: find a way to make this parametric
+    embedding_dim: 1
+  conv1:
+    in_channels: ${model.layers.embedding.embedding_dim}
+    out_channels: 3  # [background, tissue, cancer]
+
+loss_f:
+  label_smoothing: 0.001  # just a random guess
+  weight:
+    _target_: torch.Tensor
+    _args_:
+      - [0, 0.0247, 0.9753]  # [background, tissue, cancer] values taken from validation marginal

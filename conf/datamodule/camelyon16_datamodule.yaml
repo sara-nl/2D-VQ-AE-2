@@ -4,8 +4,9 @@ defaults:
   - override dataloader/dataset@train_dataloader_conf.dataset: camelyon16_dataset
   - override dataloader/dataset@val_dataloader_conf.dataset: camelyon16_dataset
 
-_target_: 'datamodules.default.DefaultDataModule'
+_target_: datamodules.default.DefaultDataModule
 _recursive_: False # To ensure dataloaders can be repeatedly init
+
 
 val_dataloader_conf:
   dataset:

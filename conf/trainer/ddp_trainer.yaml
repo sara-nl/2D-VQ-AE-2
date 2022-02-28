@@ -1,8 +1,6 @@
 defaults:
   - default_trainer
 
-
-
 replace_sampler_ddp: True
 benchmark: True
 precision: 16

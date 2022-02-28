@@ -4,3 +4,5 @@ defaults:
   - override dataset: camelyon16_embeddings_dataset
 
 _target_: 'torch.utils.data.DataLoader'
+
+batch_size: 3

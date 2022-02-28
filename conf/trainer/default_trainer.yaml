@@ -23,5 +23,3 @@ plugins:
 callbacks:
   _target_: utils.conf_helpers.instantiate_dictified_listconf
   _recursive_: False
-  tqdm_progress_bar:
-    refresh_rate: 10
