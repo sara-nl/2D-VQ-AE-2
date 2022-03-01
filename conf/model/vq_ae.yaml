@@ -15,9 +15,6 @@ defaults:
 _target_: 'vq_ae.model.VQAE'
 _recursive_: False # we init the optim locally
 
-metrics:
-  _target_: utils.conf_helpers.instantiate_dictified_listconf
-
 encoder_conf:
   stem_conf:
     in_channels: 3
