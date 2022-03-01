@@ -1,10 +1,13 @@
-`conda env create -f environment.yml`  
-`pip install .`  
+```bash
+git clone https://github.com/sara-nl/2D-VQ-AE-2.git
+cd 2D-VQ-AE-2
 
-`git clone https://github.com/sara-nl/hydra-2.0`  
-`pip install hydra-2.0/`  
-`pip install hydra-2.0/plugins/hydra_submitit_launcher/`  
-`pip install hydra-2.0/plugins/hydra_optuna_sweeper/`
+conda env create -f environment.yml
+
+pip install "git+https://github.com/sara-nl/hydra-2.0.git"
+pip install "git+https://github.com/sara-nl/hydra-2.0.git#subdirectory=plugins/hydra_optuna_sweeper"
+pip install "git+https://github.com/sara-nl/hydra-2.0.git#subdirectory=plugins/hydra_submitit_launcher"
+```
 
 
 # ASAP usage
