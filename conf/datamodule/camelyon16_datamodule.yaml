@@ -5,10 +5,12 @@ defaults:
   - override dataloader/dataset@val_dataloader_conf.dataset: camelyon16_dataset
 
 _target_: datamodules.default.DefaultDataModule
-_recursive_: False # To ensure dataloaders can be repeatedly init
 
+train_dataloader_conf:
+  _partial_: True
 
 val_dataloader_conf:
+  _partial_: True
   dataset:
     train: validation
     path: ${train_datamodule.train_dataloader_conf.dataset.path}
