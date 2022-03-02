@@ -30,7 +30,7 @@ class EMAVectorQuantizer(nn.Module):
         self.register_buffer("cluster_size", torch.zeros(num_embeddings))  # N_i
 
         # Needs to be a buffer, otherwise doesn't get added to state dict
-        self.register_buffer("first_pass", torch.as_tensor(True))
+        self.register_buffer("first_pass", torch.as_tensor(1))
 
         self.commitment_cost = commitment_cost
 
@@ -90,7 +90,7 @@ class EMAVectorQuantizer(nn.Module):
         self.embed_avg.copy_(self.embed)
 
         self.cluster_size.data.add_(cluster_size / self.num_embeddings)
-        self.first_pass.mul_(False)
+        self.first_pass.mul_(0)
 
     @torch.cuda.amp.autocast(enabled=False)
     def forward(self, inputs):
