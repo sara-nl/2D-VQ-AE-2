@@ -2,8 +2,8 @@ name: 2D-VQ-AE-2
 channels:
   - pytorch
   - anaconda
-  - defaults
   - conda-forge
+  - defaults
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=1_llvm
@@ -12,7 +12,6 @@ dependencies:
   - albumentations=1.0.3=pyhd8ed1ab_0
   - alembic=1.3.1=py_0
   - alsa-lib=1.2.3=h516909a_0
-  - antlr-python-runtime=4.9.3=pyhd8ed1ab_1
   - appdirs=1.4.4=pyhd3eb1b0_0
   - asn1crypto=1.4.0=py_0
   - async-timeout=3.0.1=py39h06a4308_0
@@ -29,10 +28,10 @@ dependencies:
   - brunsli=0.1=h2531618_0
   - bzip2=1.0.8=h7b6447c_0
   - c-ares=1.17.1=h27cfd23_0
-  - ca-certificates=2021.10.26=h06a4308_2
+  - ca-certificates=2021.10.8=ha878542_0
   - cachetools=4.2.2=pyhd3eb1b0_0
   - cairo=1.16.0=h6cf1ce9_1008
-  - certifi=2021.10.8=py39h06a4308_2
+  - certifi=2021.10.8=py39hf3d152e_1
   - cffi=1.14.6=py39h400218f_0
   - cfitsio=3.470=hf0d0db6_6
   - chardet=4.0.0=py39h06a4308_1003
@@ -179,7 +178,7 @@ dependencies:
   - opencv=4.5.1=py39hf3d152e_0
   - openh264=2.1.1=h780b84a_0
   - openjpeg=2.4.0=h3ad879b_0
-  - openssl=1.1.1m=h7f8727e_0
+  - openssl=1.1.1l=h7f98852_0
   - packaging=21.0=pyhd3eb1b0_0
   - pandas=1.2.4=py39h2531618_0
   - parso=0.8.0=py_0
@@ -214,7 +213,7 @@ dependencies:
   - python-editor=1.0.4=pyhd3eb1b0_0
   - python_abi=3.9=2_cp39
   - pytorch=1.10.0=py3.9_cuda11.3_cudnn8.2.0_0
-  - pytorch-lightning=1.5.1=pyhd8ed1ab_0
+  - pytorch-lightning=1.5.10=pyhd8ed1ab_0
   - pytorch-mutex=1.0=cuda
   - pytz=2021.3=pyhd3eb1b0_0
   - pywavelets=1.1.1=py39h6323ea4_4
@@ -240,7 +239,6 @@ dependencies:
   - sqlalchemy=1.3.23=py39h27cfd23_0
   - sqlite=3.36.0=hc218d9a_0
   - sqlparse=0.4.1=py_0
-  - submitit=1.2.1=pyh44b312d_0
   - tabulate=0.8.9=py39h06a4308_0
   - tblib=1.7.0=pyhd3eb1b0_0
   - tenacity=8.0.1=py39h06a4308_0
