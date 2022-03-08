@@ -7,9 +7,9 @@ conda activate 2D-VQ-AE-2
 
 pip install .
 
-pip install "git+https://github.com/sara-nl/hydra-2.0.git"
-pip install "git+https://github.com/sara-nl/hydra-2.0.git#subdirectory=plugins/hydra_optuna_sweeper"
-pip install "git+https://github.com/sara-nl/hydra-2.0.git#subdirectory=plugins/hydra_submitit_launcher"
+pip install "git+https://github.com/sara-nl/hydra-2.0.git@d237eb0a0a43a5c2c4b603e721ce34592a1aca38"
+pip install "git+https://github.com/sara-nl/hydra-2.0.git@d237eb0a0a43a5c2c4b603e721ce34592a1aca38#subdirectory=plugins/hydra_optuna_sweeper"
+pip install "git+https://github.com/sara-nl/hydra-2.0.git@d237eb0a0a43a5c2c4b603e721ce34592a1aca38#subdirectory=plugins/hydra_submitit_launcher"
 ```
 
 
