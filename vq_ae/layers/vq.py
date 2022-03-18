@@ -92,8 +92,9 @@ class EMAVectorQuantizer(nn.Module):
         self.cluster_size.data.add_(cluster_size / self.num_embeddings)
         self.first_pass.mul_(0)
 
-    @torch.cuda.amp.autocast(enabled=False)
     def forward(self, inputs):
+        inputs = inputs / torch.linalg.norm(inputs, dim=1, keepdim=True)
+
         ndim = inputs.dim()
         assert ndim >= 3
 
@@ -103,7 +104,7 @@ class EMAVectorQuantizer(nn.Module):
                 f' found channel dim of {inputs.shape[1]}, expected {self.embedding_dim}'
             )
 
-        inputs = inputs.float()
+        # inputs = inputs.float()
 
         with torch.no_grad():
             channel_last = inputs.permute(
@@ -118,14 +119,11 @@ class EMAVectorQuantizer(nn.Module):
             if self.training and self.first_pass:
                 self._init_ema(flat_input)
 
-            # although faster, mm is too inaccurate:
-            # https://github.com/pytorch/pytorch/issues/42479
             encoding_indices = torch.argmin(
                 torch.cdist(
                     flat_input,
                     self.embed,
                     ndim,
-                    compute_mode='donot_use_mm_for_euclid_dist'
                 )
                 , dim=1
             )
