@@ -1,4 +1,4 @@
 defaults:
   - submitit_slurm
-  - node@_here_: gpu_rtx2080ti_shared
+  - node@_here_: fat_soil_shared
   - setup: camelyon16_setup
