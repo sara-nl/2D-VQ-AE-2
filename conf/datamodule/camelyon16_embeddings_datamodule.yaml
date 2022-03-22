@@ -4,12 +4,8 @@ defaults:
 
 _target_: datamodules.default.DefaultDataModule
 
-train_dataloader_conf:
-  num_workers: 18
-
 val_dataloader_conf:
   dataset:
     train: validation
     path: ${datamodule.train_dataloader_conf.dataset.path}
   shuffle: False
-  num_workers: ${datamodule.train_dataloader_conf.num_workers}
