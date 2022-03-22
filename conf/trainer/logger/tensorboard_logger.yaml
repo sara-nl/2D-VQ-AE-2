@@ -10,3 +10,5 @@ default_hp_metric: True
 prefix: ''
 sub_dir: null
 
+max_queue: 1000
+flush_secs: 5

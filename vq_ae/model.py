@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple, Union  # Sequence deprecated from python 3.9+
+from typing import Optional, Sequence, Tuple, Union, Any  # Sequence deprecated from python 3.9+
 
 import pytorch_lightning as pl
 import torch
@@ -120,6 +120,9 @@ class VQAE(pl.LightningModule):  # noqa
         recon_loss = self.loss_f(input=out, target=batch)
 
         return out, recon_loss, encoding_loss
+
+    def transfer_batch_to_device(self, batch: torch.Tensor, device: torch.device, dataloader_idx: int) -> torch.Tensor:
+        return batch.to(device, non_blocking=True, memory_format=torch.channels_last)
 
 
 class Encoder(nn.Module):

@@ -3,15 +3,18 @@ defaults:
   - dataloader@val_dataloader_conf: default_dataloader
   - override dataloader/dataset@train_dataloader_conf.dataset: camelyon16_dataset
   - override dataloader/dataset@val_dataloader_conf.dataset: camelyon16_dataset
+  - _self_
 
 _target_: datamodules.default.DefaultDataModule
 
 train_dataloader_conf:
   _partial_: True
+  batch_size: 128
 
 val_dataloader_conf:
   _partial_: True
+  batch_size: ${train_datamodule.train_dataloader_conf.num_workers}
+  shuffle: False
   dataset:
     train: validation
     path: ${train_datamodule.train_dataloader_conf.dataset.path}
-  shuffle: False
