@@ -1,0 +1,24 @@
+- set -e
+
+- echo "Loading modules"
+# TODO: remove this hacky relative path finding
+- source ${hydra.runtime.config_sources.1.path}/../load-env.sh
+
+- echo "Setting environment variables"
+- export OMP_NUM_THREADS=6
+- export PYTHONFAULTHANDLER=1
+- export NCCL_DEBUG=INFO
+- export NCCL_ASYNC_ERROR_HANDLING=1
+
+- INPATH=${oc.env:CAMELYON16_EMBEDDINGS_PATH}
+
+- if [[ -d $INPATH ]]; then
+- echo "Detected folder $INPATH, expected a file"
+- exit 1
+- elif [[ -f $INPATH ]]; then
+- echo "Detected file $INPATH"
+- else
+- echo "$INPATH is not a valid file or folder"
+- exit 1
+- fi
+
