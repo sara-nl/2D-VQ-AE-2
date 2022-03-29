@@ -1,3 +1,5 @@
+import logging
+
 import hydra
 import pytorch_lightning as pl
 import torch
@@ -17,12 +19,19 @@ def main(experiment):
     if 'trial' in experiment:
         experiment.trainer.callbacks.pytorch_lightning_pruning_callback.trial = experiment.trial
 
+    logging.info("Instantiating trainer")
     trainer: pl.Trainer = instantiate(experiment.trainer)
+
+    logging.info("Instantiating model")
     model: pl.LightningModule = instantiate(experiment.model)
+
+    logging.info("Instantiating datamodule")
     datamodule: pl.LightningDataModule = instantiate(experiment.datamodule)
 
+    logging.info("Starting training")
     trainer.fit(model, datamodule)
 
+    logging.info("Training done")
     return trainer.callback_metrics['val_loss'].item()
 
 

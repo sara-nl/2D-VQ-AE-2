@@ -9,3 +9,4 @@ val_dataloader_conf:
     train: validation
     path: ${datamodule.train_dataloader_conf.dataset.path}
   shuffle: False
+  drop_last: False

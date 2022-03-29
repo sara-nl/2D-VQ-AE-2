@@ -24,7 +24,7 @@ layers:
     embedding_dim: 1
   conv1:
     in_channels: ${model.layers.embedding.embedding_dim}
-    out_channels: 4
+    out_channels: 8
   conv2:
     in_channels: ${model.layers.conv1.out_channels}
     out_channels: ${model.layers.conv1.out_channels}

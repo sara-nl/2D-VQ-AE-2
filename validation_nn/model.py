@@ -1,5 +1,5 @@
 from collections.abc import Sequence
-from typing import Callable, Optional, Any, Tuple
+from typing import Callable, Optional, Any, Tuple, List
 
 import torch
 from torch import nn
@@ -93,3 +93,10 @@ class CNNClassifier(pl.LightningModule):  # noqa
 
     def forward(self, data: torch.Tensor) -> torch.Tensor:
         return self.layers(data)
+
+    def transfer_batch_to_device(self, batch: List[torch.Tensor], device: torch.device, dataloader_idx: int) -> List[torch.Tensor]:
+        assert len(batch) >= 2, "assumed there would be at least an input image and a mask"
+        return [
+            batch[0].to(device, non_blocking=True, memory_format=torch.channels_last),
+            *(batch_elem.to(device, non_blocking=True) for batch_elem in batch[1:])
+        ]
