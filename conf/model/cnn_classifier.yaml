@@ -5,6 +5,10 @@ defaults:
   - layers/misc@layers.embedding: embedding
   - layers/misc@layers.flatten_after_embedding: flatten_after_embedding
   - layers/conv_block/conv_layer@layers.conv1: proj2d
+  - layers/activation@layers.act1: elu
+  - layers/conv_block/conv_layer@layers.conv2: proj2d
+  - layers/activation@layers.act2: elu
+  - layers/conv_block/conv_layer@layers.conv3: proj2d
 
   - optional optional_overrides/optim: ${model/optim}
 
@@ -20,6 +24,12 @@ layers:
     embedding_dim: 1
   conv1:
     in_channels: ${model.layers.embedding.embedding_dim}
+    out_channels: 8
+  conv2:
+    in_channels: ${model.layers.conv1.out_channels}
+    out_channels: ${model.layers.conv1.out_channels}
+  conv3:
+    in_channels: ${model.layers.conv1.out_channels}
     out_channels: 3  # [background, tissue, cancer]
 
 loss_f:
