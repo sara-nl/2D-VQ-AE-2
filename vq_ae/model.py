@@ -122,6 +122,7 @@ class VQAE(pl.LightningModule):  # noqa
         return out, recon_loss, encoding_loss
 
     def transfer_batch_to_device(self, batch: torch.Tensor, device: torch.device, dataloader_idx: int) -> torch.Tensor:
+        # FIXME: make the memory_format a parameter
         return batch.to(device, non_blocking=True, memory_format=torch.channels_last)
 
 
