@@ -15,6 +15,7 @@ val_dataloader_conf:
   _partial_: True
   batch_size: ${train_datamodule.train_dataloader_conf.num_workers}
   shuffle: False
+  drop_last: False
   dataset:
     train: validation
     path: ${train_datamodule.train_dataloader_conf.dataset.path}

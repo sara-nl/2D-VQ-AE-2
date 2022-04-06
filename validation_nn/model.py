@@ -4,8 +4,10 @@ from typing import Callable, Optional, Any, Tuple, List
 import torch
 from torch import nn
 import pytorch_lightning as pl
+from torchmetrics import MetricCollection
 
 from vq_ae.optim.sam import SAM
+
 
 class CNNClassifier(pl.LightningModule):  # noqa
 
@@ -15,6 +17,9 @@ class CNNClassifier(pl.LightningModule):  # noqa
         loss_f: nn.Module,
         layers: nn.Module,
         lr_scheduler: Optional[Callable[[torch.optim.Optimizer], Any]] = None,  # there doesn't exist a
+        train_metrics: Optional[MetricCollection] = None,
+        val_metrics: Optional[MetricCollection] = None,
+        test_metrics: Optional[MetricCollection] = None,
         **kwargs
     ):
         super().__init__()
@@ -24,6 +29,9 @@ class CNNClassifier(pl.LightningModule):  # noqa
             ('loss_f', loss_f),
             ('layers', layers),
             ('lr_scheduler', lr_scheduler),
+            ('train_metrics', train_metrics),
+            ('val_metrics', val_metrics),
+            ('test_metrics', test_metrics),
             *kwargs.items()
         ):
             setattr(self, attr_name, attr)
@@ -59,9 +67,16 @@ class CNNClassifier(pl.LightningModule):  # noqa
             sync_dist=val_or_test
         )
 
-        if hasattr(self, 'metrics'):
-            for name, metric in self.metrics(out, labels).items():
-                self.log(f'{mode}_{name}', metric)
+        if (
+            hasattr(self, (metric_name := f'{mode}_metrics'))
+            and (metrics := getattr(self, metric_name)) is not None
+        ):
+            for name, metric in metrics(out, labels).items():
+                if metric.ndim > 0 and len(metric) > 1:
+                    for i, value in enumerate(metric):
+                        self.log(f'{mode}_{name}_{i}', value, prog_bar=(mode == 'train'))
+                else:
+                    self.log(f'{mode}_{name}', metric, prog_bar=(mode == 'train'))
 
         return loss
 

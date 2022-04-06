@@ -1,0 +1,9 @@
+recall:
+  _target_: torchmetrics.Recall
+  num_classes: null
+  threshold: 0.5
+  average: 'micro'
+  mdmc_average: null
+  ignore_index: null
+  top_k: null
+  multiclass: null
