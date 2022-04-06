@@ -11,6 +11,10 @@ utils:
   _target_: utils.conf_helpers.instantiate_dictified_listconf
   _recursive_: False
 
+trainer:
+  log_every_n_steps: 5
+  benchmark: False
+
 hydra:
   job:
     env_set:

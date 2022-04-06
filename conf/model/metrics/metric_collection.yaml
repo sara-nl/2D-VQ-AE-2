@@ -1,0 +1,5 @@
+_target_: torchmetrics.MetricCollection
+#metrics: ???
+
+prefix: null
+postfix: null

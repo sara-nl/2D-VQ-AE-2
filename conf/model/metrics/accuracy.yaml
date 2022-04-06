@@ -1,14 +1,14 @@
-
-_target_: torchmetrics.Accuracy
-threshold: 0.5
-num_classes: null
-average: 'micro'
-mdmc_average: 'global'
-ignore_index: null
-top_k: null
-multiclass: null
-subset_accuracy: False
-compute_on_step: True
-dist_sync_on_step: False
-process_group: null
-dist_sync_fn: null
+accuracy:
+  _target_: torchmetrics.Accuracy
+  threshold: 0.5
+  num_classes: null
+  average: 'micro'
+  mdmc_average: 'global'
+  ignore_index: null
+  top_k: null
+  multiclass: null
+  subset_accuracy: False
+  compute_on_step: True
+  dist_sync_on_step: False
+  process_group: null
+  dist_sync_fn: null

@@ -1,6 +1,8 @@
 defaults:
   - optim: adamw
   - loss_f: cross_entropy
+  - metrics@val_metrics: metric_collection
+  - metrics@val_metrics.metrics: [accuracy, precision, recall]
   - layers/misc@layers: sequential_from_kwargs
   - layers/misc@layers.embedding: embedding
   - layers/misc@layers.flatten_after_embedding: flatten_after_embedding
@@ -17,6 +19,22 @@ _target_: validation_nn.model.CNNClassifier
 optim:
   _partial_: true
   lr: 1e-4
+
+val_metrics:
+  _convert_: all
+  metrics:
+    accuracy:
+      average: weighted
+      num_classes: 3
+      mdmc_average: global
+    precision:
+      num_classes: 3
+      average: null
+      mdmc_average: global
+    recall:
+      num_classes: 3
+      average: null
+      mdmc_average: global
 
 layers:
   embedding:
@@ -37,4 +55,5 @@ loss_f:
   weight:
     _target_: torch.Tensor
     _args_:
-      - [0, 0.0247, 0.9753]  # [background, tissue, cancer] values taken from validation marginal
+#      - [0, 0.0247, 0.9753]  # [background, tissue, cancer] values taken from validation marginal
+      - [0.001, 0.0237, 0.9743]  # [background, tissue, cancer] values taken from validation marginal
