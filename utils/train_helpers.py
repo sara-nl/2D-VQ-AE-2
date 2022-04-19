@@ -1,5 +1,8 @@
 from typing import Optional, Union, Any, Sequence
 
+import torch
+import pytorch_lightning as pl
+
 
 def make_divisible(
     value: float,
@@ -23,3 +26,9 @@ def maybe_repeat_layer(layer: Union[Any, Sequence], repetitions: int) -> Sequenc
     else:
         assert len(layer) == repetitions
         return layer
+
+
+class ChannelsLast(pl.Callback):
+    def on_fit_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
+        # Inplace model modification
+        pl_module.to(memory_format=torch.channels_last)

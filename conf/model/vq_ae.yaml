@@ -15,15 +15,18 @@ defaults:
 _target_: 'vq_ae.model.VQAE'
 _recursive_: False # we init the optim locally
 
+optim_conf:
+  lr: 3e-4
+
 encoder_conf:
   stem_conf:
     in_channels: 3
-    out_channels: 4
+    out_channels: 8
   down_block_conf:
     n_down: 3
     n_pre_layers: 1
     n_post_layers: 4
-  n_pre_enc_layers: 150
+  n_pre_enc_layers: 50
   vq_conf:
     '0':
       embedding_dim: ${mul:${model.encoder_conf.stem_conf.out_channels},${pow:2,${model.encoder_conf.down_block_conf.n_down}}}
@@ -33,7 +36,7 @@ decoder_conf:
   stem_conf:
     in_channels: ${model.encoder_conf.stem_conf.out_channels}
     out_channels: ${model.encoder_conf.stem_conf.in_channels}
-  n_post_enc_layers: 150
+  n_post_enc_layers: ${model.encoder_conf.n_pre_enc_layers}
   up_block_conf:
     n_up: ${model.encoder_conf.down_block_conf.n_down}
     n_pre_layers: 1

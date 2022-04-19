@@ -92,7 +92,6 @@ class EMAVectorQuantizer(nn.Module):
         self.cluster_size.data.add_(cluster_size / self.num_embeddings)
         self.first_pass.mul_(0)
 
-    @torch.cuda.amp.autocast(enabled=False)
     def forward(self, inputs):
         ndim = inputs.dim()
         assert ndim >= 3
@@ -103,29 +102,31 @@ class EMAVectorQuantizer(nn.Module):
                 f' found channel dim of {inputs.shape[1]}, expected {self.embedding_dim}'
             )
 
-        inputs = inputs.float()
 
         with torch.no_grad():
-            channel_last = inputs.permute(
-                0,
-                *range(2, ndim),
-                1
-            )  # XXX: might not actually be necessary
+
+            channel_last = (
+                inputs.permute(
+                    0,
+                    *range(2, ndim),
+                    1
+                )
+            )
             input_shape = channel_last.shape
 
             flat_input = channel_last.reshape(-1, self.embedding_dim)
+            flat_input = flat_input - flat_input.mean(dim=0, keepdims=True)
+            flat_input = flat_input / flat_input.norm(dim=1, keepdim=True)
 
             if self.training and self.first_pass:
                 self._init_ema(flat_input)
+                self.embed.div_(self.embed.norm(dim=1, keepdim=True))
 
-            # although faster, mm is too inaccurate:
-            # https://github.com/pytorch/pytorch/issues/42479
             encoding_indices = torch.argmin(
                 torch.cdist(
                     flat_input,
                     self.embed,
                     ndim,
-                    compute_mode='donot_use_mm_for_euclid_dist'
                 )
                 , dim=1
             )
@@ -142,8 +143,7 @@ class EMAVectorQuantizer(nn.Module):
             encoding_indices = encoding_indices.reshape(input_shape[:-1])
 
         # Don't need to detach quantized; doesn't require grad
-        e_latent_loss = F.mse_loss(quantized, inputs)
-        loss = self.commitment_cost * e_latent_loss
+        loss = F.mse_loss(inputs, quantized) * self.commitment_cost
 
         # Trick to have identity backprop grads
         quantized = inputs + (quantized - inputs).detach()

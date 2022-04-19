@@ -1,10 +1,14 @@
 defaults:
   - optim: adamw
   - loss_f: cross_entropy
+  - metrics@val_metrics: metric_collection
+  - metrics@val_metrics.metrics: [accuracy, precision, recall]
   - layers/misc@layers: sequential_from_kwargs
   - layers/misc@layers.embedding: embedding
   - layers/misc@layers.flatten_after_embedding: flatten_after_embedding
   - layers/conv_block/conv_layer@layers.conv1: proj2d
+  - layers/activation@layers.act1: elu
+  - layers/conv_block/conv_layer@layers.conv2: proj2d
 
   - optional optional_overrides/optim: ${model/optim}
 
@@ -14,12 +18,32 @@ optim:
   _partial_: true
   lr: 1e-4
 
+val_metrics:
+  _convert_: all
+  metrics:
+    accuracy:
+      average: weighted
+      num_classes: 3
+      mdmc_average: global
+    precision:
+      num_classes: 3
+      average: null
+      mdmc_average: global
+    recall:
+      num_classes: 3
+      average: null
+      mdmc_average: global
+
 layers:
   embedding:
     num_embeddings: 256  # FIXME: find a way to make this parametric
     embedding_dim: 1
   conv1:
     in_channels: ${model.layers.embedding.embedding_dim}
+    out_channels: 32
+    bias: False
+  conv2:
+    in_channels: ${model.layers.conv1.out_channels}
     out_channels: 3  # [background, tissue, cancer]
 
 loss_f:
@@ -27,4 +51,7 @@ loss_f:
   weight:
     _target_: torch.Tensor
     _args_:
-      - [0, 0.0247, 0.9753]  # [background, tissue, cancer] values taken from validation marginal
+#      - [0, 0.0247, 0.9753]  # [background, tissue, cancer] values taken from validation marginal
+#      - [0.001, 0.0237, 0.9743]  # [background, tissue, cancer] values taken from validation marginal
+      - [1.476, 3.1786, 125]  # the reciprical of the marginal probabilities
+#      - [1.476, 3.1786, 125]

@@ -1,0 +1,9 @@
+precision:
+  _target_: torchmetrics.Precision
+  num_classes:  null
+  threshold:  0.5
+  average:  'micro'
+  mdmc_average:  null
+  ignore_index:  null
+  top_k:  null
+  multiclass:  null

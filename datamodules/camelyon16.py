@@ -7,7 +7,7 @@ from functools import reduce
 from itertools import chain, product, starmap, zip_longest
 from operator import xor, attrgetter
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 
 import albumentations.pytorch
 import h5py
@@ -235,25 +235,28 @@ class CAMELYON16EmbeddingsDataset(Dataset):
 
         # Getting all the h5 files back to numpy requires calling np.asarray on each individual value,
         # which is the reason that the iteration logic below is such a mess
-        self.images, self.masks = map(
-            # need casting to np.64
-            lambda arrays: tuple(arr.astype(np.promote_types(np.int64, arr.dtype), casting='safe') for arr in arrays),
-            (
-                get_scans_from_db(pattern='test')
-                if train == 'test'
-                else _train_val_split_paths([
-                    get_scans_from_db(modality)
-                    for modality in ('normal', 'tumor')
-                ], split_frac=train_frac, mode=train)
-            )
-        )
+        self.images, self.masks = map(functools.partial(np.asarray, dtype=object), (
+            get_scans_from_db(pattern='test')
+            if train == 'test'
+            else _train_val_split_paths([
+                get_scans_from_db(modality)
+                for modality in ('normal', 'tumor')
+            ], split_frac=train_frac, mode=train)
+        ))
+
         self.transforms = transforms
 
     def __len__(self):
         return len(self.images)
 
     def __getitem__(self, index):
-        image, mask = self.images[index], self.masks[index]
+
+        # only convert the images and masks to the required datype here,
+        # otherwise the amount of consumed RAM is _huge_
+        image, mask = (
+            (img := self.images[index]).astype(np.promote_types(np.int32, img.dtype), casting='safe'),  # nn.Embed needs int32
+            (msk := self.masks[index]).astype(np.promote_types(np.int64, msk.dtype), casting='safe'),  # nn.CELoss needs int64
+        )
 
         return (
             (image, mask) if self.transforms is None
@@ -396,17 +399,15 @@ def collate_unequal_sized_slides(batch: Sequence[Tuple[np.ndarray, ...]], mode: 
 if __name__ == '__main__':
     print("starting")
     dataset = CAMELYON16EmbeddingsDataset(
-        path='/home/robertsc/2D-VQ-AE-2/vq_ae/multirun/2021-11-01/13-43-06/0/encodings.hdf5',
+        path='/home/robertsc/2D-VQ-AE-2/vq_ae/multirun/2021-11-01/13-43-06/1/encodings.hdf5',
         transforms=albumentations.pytorch.ToTensorV2(),
         train='train',
-        train_frac=0.95,
+        train_frac=0.90,
     )
     print(dataset[0])
 
     dl = DataLoader(dataset, batch_size=4, collate_fn=collate_unequal_sized_slides)
-
     dli = iter(dl)
     out = next(dli)
-    breakpoint()
     out = next(dli)
     breakpoint()
