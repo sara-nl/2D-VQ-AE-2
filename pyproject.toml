@@ -1,21 +1,33 @@
 [project]
-name = ""
-version = ""
-description = ""
+name = "2D-VQ-AE-2"
+version = "0.2.1"
+description = "2D Vector-Quantized Auto-Encoder for compression of Whole-Slide Images in Histopathology"
 authors = [
-    {name = "robogast"},
+    {name = "Robert Jan Schlimbach"},
 ]
 dependencies = [
-    "torch @ https://download.pytorch.org/whl/cu113/torch-1.10.2%2Bcu113-cp39-cp39-linux_x86_64.whl",
-    "torchvision @ https://download.pytorch.org/whl/cu113/torchvision-0.11.3%2Bcu113-cp39-cp39-linux_x86_64.whl",
+    "torch",
+    "torchvision",
+    "pytorch-lightning>=1.6.1",
+    "torchmetrics>=0.8.0",
+    "hydra @ git+https://github.com/sara-nl/hydra-2.0.git@v1.2.0dev6",
+    "git+https://github.com/sara-nl/hydra-2.0.git@v1.2.0dev6#egg=hydra-optuna-sweeper&subdirectory=plugins/hydra_optuna_sweeper",
+    "git+https://github.com/sara-nl/hydra-2.0.git@v1.2.0dev6#egg=hydra-submitit-launcher&subdirectory=plugins/hydra_submitit_launcher",
+    "albumentations>=1.1.0",
+    "h5py>=3.6.0",
 ]
 requires-python = ">=3.9"
 license = {text = "MIT"}
 
 [project.urls]
-Homepage = ""
+Homepage = "https://github.com/sara-nl/2D-VQ-AE-2"
 [tool.pdm]
 
 [build-system]
 requires = ["pdm-pep517"]
 build-backend = "pdm.pep517.api"
+
+[[tool.pdm.source]]
+type = "find_links"
+url = "https://download.pytorch.org/whl/cu115"
+name = ["torch", "torchvision"]
