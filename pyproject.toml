@@ -6,8 +6,8 @@ authors = [
     {name = "Robert Jan Schlimbach"},
 ]
 dependencies = [
-    "torch",
-    "torchvision",
+    "torch==1.11.0+cu115",
+    "torchvision==0.12.0+cu115",
     "pytorch-lightning>=1.6.1",
     "torchmetrics>=0.8.0",
     "hydra @ git+https://github.com/sara-nl/hydra-2.0.git@v1.2.0dev6",
@@ -21,13 +21,12 @@ license = {text = "MIT"}
 
 [project.urls]
 Homepage = "https://github.com/sara-nl/2D-VQ-AE-2"
-[tool.pdm]
 
 [build-system]
 requires = ["pdm-pep517"]
 build-backend = "pdm.pep517.api"
 
 [[tool.pdm.source]]
-type = "find_links"
 url = "https://download.pytorch.org/whl/cu115"
-name = ["torch", "torchvision"]
+name = "torch-cu115"
+
