@@ -24,12 +24,13 @@ def main(experiment):
 
     logging.info("Instantiating model")
     model: pl.LightningModule = instantiate(experiment.model)
+    model.to(memory_format=torch.channels_last)
 
     logging.info("Instantiating datamodule")
     datamodule: pl.LightningDataModule = instantiate(experiment.datamodule)
 
     logging.info("Starting training")
-    trainer.fit(model, datamodule)
+    trainer.fit(model, datamodule=datamodule)
 
     logging.info("Training done")
     return trainer.callback_metrics['val_loss'].item()

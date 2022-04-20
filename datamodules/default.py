@@ -2,10 +2,7 @@ from dataclasses import dataclass
 from typing import Optional, Callable
 
 import pytorch_lightning as pl
-from hydra.utils import instantiate
 from torch.utils.data.dataloader import DataLoader
-
-from utils.conf_helpers import DataloaderConf
 
 
 @dataclass
@@ -25,4 +22,3 @@ class DefaultDataModule(pl.LightningDataModule):
 
     def test_dataloader(self) -> DataLoader:
         return self.test_dataloader_conf()
-

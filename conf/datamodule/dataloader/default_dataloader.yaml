@@ -1,7 +1,7 @@
 defaults:
   - dataset: ???
 
-_target_: 'torch.utils.data.DataLoader'
+_target_: torch.utils.data.DataLoader
 _partial_: true
   
 batch_size: 32

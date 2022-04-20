@@ -7,7 +7,7 @@ from functools import reduce
 from itertools import chain, product, starmap, zip_longest
 from operator import xor, attrgetter
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import Optional, Tuple, List, Callable
 
 import albumentations.pytorch
 import h5py
@@ -16,6 +16,7 @@ import torch
 from albumentations import BasicTransform
 from torch.utils.data import Dataset, DataLoader
 
+from datamodules.default import DefaultDataModule
 from wsi_io.imagereader import ImageReader
 
 
@@ -265,6 +266,22 @@ class CAMELYON16EmbeddingsDataset(Dataset):
                 transformed['mask']
             )
         )
+
+
+@dataclass
+class CAMELYON16EmbeddingsDatamodule(DefaultDataModule):
+
+    def transfer_batch_to_device(
+        self,
+        batch: List[torch.Tensor],
+        device: torch.device,
+        dataloader_idx: int
+    ) -> List[torch.Tensor]:
+        assert len(batch) >= 2, "assumed there would be at least an input image and a mask"
+        return [
+            batch[0].to(device, non_blocking=True, memory_format=torch.channels_last),
+            *(batch_elem.to(device, non_blocking=True) for batch_elem in batch[1:])
+        ]
 
 
 def _train_val_split_paths(

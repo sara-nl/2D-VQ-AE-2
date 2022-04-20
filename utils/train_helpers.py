@@ -32,3 +32,4 @@ class ChannelsLast(pl.Callback):
     def on_fit_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         # Inplace model modification
         pl_module.to(memory_format=torch.channels_last)
+        pl_module.configure_optimizers()

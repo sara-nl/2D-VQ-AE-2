@@ -3,8 +3,6 @@ defaults:
   - collate_fn: collate_unequal_sized_slides
   - override dataset: camelyon16_embeddings_dataset
 
-_target_: torch.utils.data.DataLoader
-
 batch_size: 9
 num_workers: 6
 persistent_workers: True
