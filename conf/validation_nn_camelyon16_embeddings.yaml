@@ -21,3 +21,4 @@ hydra:
       HYDRA_FULL_ERROR: '1'
     env_copy:
       - CAMELYON16_EMBEDDINGS_PATH
+      - PYTORCH_CUDA_ALLOC_CONF

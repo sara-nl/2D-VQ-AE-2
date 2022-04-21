@@ -2,7 +2,8 @@
 
 - echo "Loading modules"
 # TODO: remove this hacky relative path finding
-- source ${hydra.runtime.config_sources.1.path}/../load-env.sh
+- source ${hydra.runtime.config_sources.1.path}/../load-asap.sh
+- eval "$(pdm --pep582)"
 
 - echo "Setting environment variables"
 - export OMP_NUM_THREADS=6
