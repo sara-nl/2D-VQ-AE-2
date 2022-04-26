@@ -1,6 +1,6 @@
 [project]
 name = "2D-VQ-AE-2"
-version = "0.2.1"
+version = "0.3.0"
 description = "2D Vector-Quantized Auto-Encoder for compression of Whole-Slide Images in Histopathology"
 authors = [
     {name = "Robert Jan Schlimbach"},
