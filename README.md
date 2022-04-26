@@ -5,7 +5,7 @@
 
 ### Installation
 See [INSTALL.md](./INSTALL.md).  
-We provide both an `environment.yml` and a `requirements.txt`, but we suggest the usage of `environment.yml`.
+We use PDM as python package manager (https://github.com/pdm-project/pdm).
 
 ### Locally
 set `CAMELYON16_PATH` and run `train.py`:
@@ -30,8 +30,6 @@ Input dimensionality: `256×256×3` ordinal 8-bit, latent dimensionality: `32×3
 
 ![image](https://user-images.githubusercontent.com/5969044/134488209-4c1696d3-6478-41d0-a7bf-e7e99544382b.png)
 ![image](https://user-images.githubusercontent.com/5969044/134643133-26268fed-d950-4441-82f0-a2358c9d114d.png)
-
-
 
 ## Research
 If this repository has helped you in your research we would value to be acknowledged in your publication.
