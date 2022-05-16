@@ -2,6 +2,8 @@
 e.g:
 - Linux/Mac: `curl -sSL https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py | python3 -`
 - Windows: `(Invoke-WebRequest -Uri https://raw.githubusercontent.com/pdm-project/pdm/main/install-pdm.py -UseBasicParsing).Content | python -`
+## Enable pep582 
+`$ eval "$(pdm --pep582)"`
 
 # Install repo/dependencies
 ```bash
