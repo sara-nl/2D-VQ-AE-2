@@ -1,0 +1,7 @@
+# @package model
+
+loss_f:
+  pos_weight:
+    _target_: torch.tensor
+    _args_:
+      - 40.4858  # [background, tissue, cancer] values taken from validation marginal

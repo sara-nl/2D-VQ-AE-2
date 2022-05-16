@@ -8,6 +8,5 @@ _target_: vq_ae.model.Decoder
 _recursive_: False
 
 n_enc_layers: 1
-n_post_enc_layers:
-  - 5
+n_post_enc_layers: 5
 shortcut_block_conf: null

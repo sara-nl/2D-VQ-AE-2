@@ -26,14 +26,17 @@ val_metrics:
     accuracy:
       average: weighted
       num_classes: 3
+      ignore_index: 0
       mdmc_average: global
     precision:
       num_classes: 3
       average: null
+      ignore_index: 0
       mdmc_average: global
     recall:
       num_classes: 3
       average: null
+      ignore_index: 0
       mdmc_average: global
 
 layers:
@@ -51,7 +54,7 @@ layers:
     out_channels: 3  # [background, tissue, cancer]
 
 loss_f:
-#  label_smoothing: 0.001  # just a random guess
+  label_smoothing: 0.001  # just a random guess
   weight:
     _target_: torch.Tensor
     _args_:

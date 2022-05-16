@@ -8,7 +8,7 @@ _target_: pytorch_lightning.Trainer
 accelerator: auto
 devices: auto
 
-num_sanity_val_steps: 0
+num_sanity_val_steps: -1 # useful to get a baseline performance of your model
 precision: 32
 
 log_every_n_steps: 50

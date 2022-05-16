@@ -1,0 +1,12 @@
+# @package model
+
+loss_f:
+  label_smoothing: 0.001  # just a random guess
+  weight:
+    _target_: torch.Tensor
+    _args_:
+      - [0, 0.0247, 0.9753]  # [background, tissue, cancer] values taken from validation marginal
+  #    - [0.0247, 0.9753]  # [background, tissue, cancer] values taken from validation marginal
+  #    - [0.001, 0.0237, 0.9743]  # [background, tissue, cancer] values taken from validation marginal
+  #    - [1.476, 3.1786, 125]  # the reciprical of the marginal probabilities
+  #    - [1.476, 3.1786, 125]
