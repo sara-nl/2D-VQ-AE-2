@@ -10,9 +10,9 @@ dependencies = [
     "torchvision==0.12.0+cu115",
     "pytorch-lightning>=1.6.1",
     "torchmetrics>=0.8.0",
-    "hydra @ git+https://github.com/sara-nl/hydra-2.0.git@v1.2.0dev6",
-    "git+https://github.com/sara-nl/hydra-2.0.git@v1.2.0dev6#egg=hydra-optuna-sweeper&subdirectory=plugins/hydra_optuna_sweeper",
-    "git+https://github.com/sara-nl/hydra-2.0.git@v1.2.0dev6#egg=hydra-submitit-launcher&subdirectory=plugins/hydra_submitit_launcher",
+    "hydra @ git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718", # hydra
+    "git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718#egg=hydra-optuna-sweeper&subdirectory=plugins/hydra_optuna_sweeper", # hydra_optuna_sweeper
+    "git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718#egg=hydra-submitit-launcher&subdirectory=plugins/hydra_submitit_launcher", # hydra_submitit_launcher
     "albumentations>=1.1.0",
     "h5py>=3.6.0",
     "matplotlib>=3.5.2",
