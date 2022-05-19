@@ -15,13 +15,15 @@ dependencies = [
     "git+https://github.com/sara-nl/hydra-2.0.git@v1.2.0dev6#egg=hydra-submitit-launcher&subdirectory=plugins/hydra_submitit_launcher",
     "albumentations>=1.1.0",
     "h5py>=3.6.0",
+    "matplotlib>=3.5.2",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.9,<3.11"  # scipy doesn't support 3.11 yet
 license = {text = "MIT"}
 
 [project.urls]
 Homepage = "https://github.com/sara-nl/2D-VQ-AE-2"
 
+[project.optional-dependencies]
 [build-system]
 requires = ["pdm-pep517"]
 build-backend = "pdm.pep517.api"
@@ -30,3 +32,8 @@ build-backend = "pdm.pep517.api"
 url = "https://download.pytorch.org/whl/cu115"
 name = "torch-cu115"
 
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "rich>=12.4.1",
+]
