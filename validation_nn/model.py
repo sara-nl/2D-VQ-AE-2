@@ -71,6 +71,7 @@ class CNNClassifier(pl.LightningModule):  # noqa
             hasattr(self, (metric_name := f'{mode}_metrics'))
             and (metrics := getattr(self, metric_name)) is not None
         ):
+            out[:, 0][(labels == 0)] = torch.inf  # XXX: HACK
             for name, metric in metrics(out, labels).items():
                 if metric.ndim > 0 and len(metric) > 1:
                     for i, value in enumerate(metric):
