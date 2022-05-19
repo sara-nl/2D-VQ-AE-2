@@ -30,6 +30,7 @@ class EMAVectorQuantizer(nn.Module):
         self.register_buffer("cluster_size", torch.zeros(num_embeddings))  # N_i
 
         # Needs to be a buffer, otherwise doesn't get added to state dict
+        # Would like it to be boolean buffer, but that is not always implemented
         self.register_buffer("first_pass", torch.as_tensor(1))
 
         self.commitment_cost = commitment_cost
@@ -90,7 +91,7 @@ class EMAVectorQuantizer(nn.Module):
         self.embed_avg.copy_(self.embed)
 
         self.cluster_size.data.add_(cluster_size / self.num_embeddings)
-        self.first_pass.mul_(0)
+        self.first_pass.mul_(0)  # self.first_pass = False
 
     def forward(self, inputs):
         ndim = inputs.dim()
@@ -102,9 +103,7 @@ class EMAVectorQuantizer(nn.Module):
                 f' found channel dim of {inputs.shape[1]}, expected {self.embedding_dim}'
             )
 
-
         with torch.no_grad():
-
             channel_last = (
                 inputs.permute(
                     0,
@@ -115,12 +114,9 @@ class EMAVectorQuantizer(nn.Module):
             input_shape = channel_last.shape
 
             flat_input = channel_last.reshape(-1, self.embedding_dim)
-            flat_input = flat_input - flat_input.mean(dim=0, keepdims=True)
-            flat_input = flat_input / flat_input.norm(dim=1, keepdim=True)
 
-            if self.training and self.first_pass:
+            if self.first_pass:
                 self._init_ema(flat_input)
-                self.embed.div_(self.embed.norm(dim=1, keepdim=True))
 
             encoding_indices = torch.argmin(
                 torch.cdist(
