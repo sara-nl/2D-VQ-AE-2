@@ -1,6 +1,7 @@
 
 defaults:
   - trainer: ddp_trainer
+  - trainer/callbacks: [channels_last]
   - model: vq_ae
   - datamodule@train_datamodule: camelyon16_datamodule
   - utils: [seed_everything]

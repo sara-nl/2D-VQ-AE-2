@@ -29,7 +29,7 @@ def maybe_repeat_layer(layer: Union[Any, Sequence], repetitions: int) -> Sequenc
 
 
 class ChannelsLast(pl.Callback):
-    def on_fit_start(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
+    def on_setup(self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage = None) -> None:
         # Inplace model modification
         pl_module.to(memory_format=torch.channels_last)
         pl_module.configure_optimizers()

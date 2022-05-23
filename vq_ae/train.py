@@ -21,7 +21,8 @@ def main(experiment):
     model: pl.LightningModule = instantiate(experiment.model)
     train_datamodule: pl.LightningDataModule = instantiate(experiment.train_datamodule)
 
-    trainer.fit(model, train_datamodule)
+    # we pass the dataloaders explicitely so we can use memory_format=torch.channels
+    trainer.fit(model, train_datamodule.train_dataloader(), train_datamodule.val_dataloader())
 
     return trainer.callback_metrics['val_recon_loss'].item()
 
