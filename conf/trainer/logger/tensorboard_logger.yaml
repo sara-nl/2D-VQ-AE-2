@@ -4,7 +4,7 @@ _target_: pytorch_lightning.loggers.TensorBoardLogger
 save_dir: ${hydra:runtime.output_dir}/lightning_logs/
 
 name: ''
-version: null
+version: ${oc.env:SLURM_JOB_ID,null}
 log_graph: False
 default_hp_metric: True
 prefix: ''

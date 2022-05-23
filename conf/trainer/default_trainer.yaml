@@ -7,6 +7,7 @@ _target_: pytorch_lightning.Trainer
 
 accelerator: auto
 devices: auto
+num_nodes: ${hydra:launcher.nodes}
 
 num_sanity_val_steps: -1 # useful to get a baseline performance of your model
 precision: 32

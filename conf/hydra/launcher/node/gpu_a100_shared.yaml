@@ -1,7 +1,7 @@
 timeout_min: 3600 # 2.5 days
 partition: gpu
 tasks_per_node: 1
-gpus_per_task: 1
+gpus_per_node: 1 # for some reason it needs to be gpus_per_node; gpus_per_task doesn't work.
 cpus_per_gpu: 18
 mem_per_gpu: 120000M
 additional_parameters:
