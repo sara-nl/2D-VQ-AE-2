@@ -1,6 +1,7 @@
 
 defaults:
   - trainer: ddp_trainer
+  - trainer/callbacks: [elements_per_second]
   - model: cnn_classifier
   - datamodule: camelyon16_embeddings_datamodule
   - utils: [seed_everything]

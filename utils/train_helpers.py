@@ -1,7 +1,11 @@
-from typing import Optional, Union, Any, Sequence
+import time
+from typing import Optional, Union, Any, Sequence, Dict
 
 import torch
 import pytorch_lightning as pl
+
+from pytorch_lightning.utilities.exceptions import MisconfigurationException
+from pytorch_lightning.utilities.types import STEP_OUTPUT
 
 
 def make_divisible(
@@ -33,3 +37,62 @@ class ChannelsLast(pl.Callback):
         # Inplace model modification
         pl_module.to(memory_format=torch.channels_last)
         pl_module.configure_optimizers()
+
+
+class ElementsPerSecond(pl.Callback):
+
+    def setup(self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: Optional[str] = None) -> None:
+        if not trainer.loggers:
+            raise MisconfigurationException("Cannot use DeviceStatsMonitor callback with Trainer that has no logger.")
+
+    def on_train_batch_start(
+        self,
+        trainer: pl.Trainer,
+        pl_module: pl.LightningModule,
+        batch: Any,
+        batch_idx: int,
+        unused: int = 0,
+    ) -> None:
+
+        if not trainer.loggers:
+            raise MisconfigurationException("Cannot use `ElementsPerSecond` callback with `Trainer(logger=False)`.")
+
+        if not trainer._logger_connector.should_update_logs:
+            return
+
+        self.train_start_time = time.perf_counter()
+
+    def on_train_batch_end(
+        self,
+        trainer: pl.Trainer,
+        pl_module: pl.LightningModule,
+        outputs: STEP_OUTPUT,
+        batch: Any,
+        batch_idx: int,
+        unused: int = 0,
+    ) -> None:
+        if not trainer.loggers:
+            raise MisconfigurationException("Cannot use `ElementsPerSecond` callback with `Trainer(logger=False)`.")
+
+        if not trainer._logger_connector.should_update_logs:
+            return
+
+        try:
+            elapsed_time = time.perf_counter() - self.train_start_time
+            del self.train_start_time  # to enable this check for subsequent iters
+        except AttributeError:
+            raise RuntimeError("Reached batch_end before batch_start")
+
+        # else assumes that batch is a tuple of which the first element is the data
+        batch_size = (
+            batch.shape[0]
+            if isinstance(batch, torch.Tensor)
+            else batch[0].shape[0]
+        )
+
+        imgs_per_sec = round(batch_size / elapsed_time, 3)
+
+        for logger in trainer.loggers:
+            logger.log_metrics({
+                'train_unnormalized_batch_elems_per_sec': imgs_per_sec
+            }, step=trainer.fit_loop.epoch_loop._batches_that_stepped)

@@ -1,0 +1,2 @@
+elements_per_second:
+  _target_: utils.train_helpers.ElementsPerSecond
