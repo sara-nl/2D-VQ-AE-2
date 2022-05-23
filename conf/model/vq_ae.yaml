@@ -16,7 +16,7 @@ _target_: 'vq_ae.model.VQAE'
 _recursive_: False # we init the optim locally
 
 optim_conf:
-  lr: 3e-4
+  lr: 1e-4
 
 encoder_conf:
   stem_conf:

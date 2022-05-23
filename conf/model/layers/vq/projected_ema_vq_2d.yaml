@@ -1,0 +1,7 @@
+_target_: vq_ae.layers.vq.ProjectedEMAVectorQuantizer2d
+num_embeddings: 256
+embedding_dim: 32
+commitment_cost: 1
+decay: 0.99
+laplace_alpha: 1e-5
+projection_dim: 8

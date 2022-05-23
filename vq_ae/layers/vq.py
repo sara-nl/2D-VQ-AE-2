@@ -151,3 +151,41 @@ class EMAVectorQuantizer(nn.Module):
             encoding_indices,
             loss,
         )
+
+
+class ProjectedEMAVectorQuantizer2d(EMAVectorQuantizer):
+    # Code originally adapted from:
+    # https://colab.research.google.com/github/zalandoresearch/pytorch-vq-vae/blob/master/vq-vae.ipynb#scrollTo=fknqLRCvdJ4I
+    #
+    # Adapted version copied from
+    # https://github.com/sara-nl/3D-VQ-VAE-2
+
+    """
+    EMA-updated Vector Quantizer
+    """
+
+    def __init__(
+        self,
+        num_embeddings: int,
+        embedding_dim: int,
+        commitment_cost: float,
+        decay: float,
+        laplace_alpha: float,
+        projection_dim: int
+    ):
+        super().__init__(
+            num_embeddings,
+            projection_dim,
+            commitment_cost,
+            decay,
+            laplace_alpha
+        )
+
+        self.proj_in, self.proj_out = (
+            nn.Conv2d(in_channels=embedding_dim, out_channels=projection_dim, kernel_size=1),
+            nn.Conv2d(in_channels=projection_dim, out_channels=embedding_dim, kernel_size=1),
+        )
+
+    def forward(self, inputs):
+        quantized, *rest = super().forward(self.proj_in(inputs))
+        return self.proj_out(quantized), *rest
