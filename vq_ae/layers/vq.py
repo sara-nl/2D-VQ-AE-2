@@ -115,7 +115,7 @@ class EMAVectorQuantizer(nn.Module):
 
             flat_input = channel_last.reshape(-1, self.embedding_dim)
 
-            if self.first_pass:
+            if self.first_pass and self.training:
                 self._init_ema(flat_input)
 
             encoding_indices = torch.argmin(
@@ -123,6 +123,7 @@ class EMAVectorQuantizer(nn.Module):
                     flat_input,
                     self.embed,
                     ndim,
+                    compute_mode='donot_use_mm_for_euclid_dist'
                 )
                 , dim=1
             )
