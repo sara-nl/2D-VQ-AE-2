@@ -1,0 +1,26 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: >-
+  2D Vector-Quantized Auto-Encoder for compression of
+  Whole-Slide Images in Histopathology 
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Robert Jan
+    email: robert-jan.schlimbach@surf.nl
+    family-names: Schlimbach
+    affiliation: SURF
+    orcid: 'https://orcid.org/0000-0001-9031-3331'
+repository-code: 'https://github.com/sara-nl/2D-VQ-AE-2'
+url: 'https://www.examode.eu/'
+keywords:
+  - Neural Data Compression
+  - Whole-Slide Imaging
+  - Vector-Quantization
+  - Examode
+  - Auto-Encoder
+license: MIT
