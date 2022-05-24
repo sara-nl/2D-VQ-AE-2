@@ -8,10 +8,10 @@ path: ${oc.env:CAMELYON16_PATH}
 train: train
 train_frac: 0.90
 
-spacing: 0.5
+spacing: 0.25
 spacing_tolerance: 0.15
 patch_size:
-  - 256
-  - 256
+  - 512
+  - 512
 
 n_patches_per_wsi: 250

@@ -23,7 +23,7 @@ encoder_conf:
     in_channels: 3
     out_channels: 8
   down_block_conf:
-    n_down: 3
+    n_down: 4
     n_pre_layers: 1
     n_post_layers: 4
   n_pre_enc_layers: 50

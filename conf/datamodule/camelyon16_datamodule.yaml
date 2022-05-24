@@ -9,11 +9,11 @@ _target_: datamodules.default.DefaultDataModule
 
 train_dataloader_conf:
   _partial_: True
-  batch_size: 128
+  batch_size: 16
 
 val_dataloader_conf:
   _partial_: True
-  batch_size: ${train_datamodule.train_dataloader_conf.num_workers}
+  batch_size: ${mul:2,${train_datamodule.train_dataloader_conf.batch_size}}
   shuffle: False
   drop_last: False
   dataset:
