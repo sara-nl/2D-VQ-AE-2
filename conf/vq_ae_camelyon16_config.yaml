@@ -16,5 +16,6 @@ hydra:
   job:
     env_set:
       HYDRA_FULL_ERROR: "1"
+      PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:512"
     env_copy:
       - CAMELYON16_PATH

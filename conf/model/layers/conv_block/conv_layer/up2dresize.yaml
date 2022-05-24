@@ -1,0 +1,4 @@
+defaults:
+  - proj2d
+
+_target_: vq_ae.layers.conv.ResizeConv2D

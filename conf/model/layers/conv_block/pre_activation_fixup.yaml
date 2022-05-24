@@ -7,9 +7,9 @@ defaults:
   - conv_layer@conv_conf.down.skip_conv: down2d
 
   - conv_layer@conv_conf.up.branch_conv1: proj2d
-  - conv_layer@conv_conf.up.branch_conv2: up2d
+  - conv_layer@conv_conf.up.branch_conv2: up2dresize
   - conv_layer@conv_conf.up.branch_conv3: proj2d
-  - conv_layer@conv_conf.up.skip_conv: up2d
+  - conv_layer@conv_conf.up.skip_conv: up2dresize
 
   - conv_layer@conv_conf.same.branch_conv1: proj2d
   - conv_layer@conv_conf.same.branch_conv2: same2d
@@ -29,7 +29,7 @@ out_channels: null
 mode: null
 n_layers: null
 
-bottleneck_divisor: 4
+bottleneck_divisor: 1
 
 conv_conf:
   down:
