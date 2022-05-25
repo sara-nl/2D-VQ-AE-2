@@ -13,9 +13,16 @@ utils:
   _recursive_: False
 
 hydra:
+  sweep:
+    subdir: ${hydra:job.num}_${hydra:job.id}
   job:
     env_set:
       HYDRA_FULL_ERROR: "1"
       PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:512"
     env_copy:
       - CAMELYON16_PATH
+  callbacks:
+    log_job_return:
+      _target_: hydra.experimental.callbacks.LogJobReturnCallback
+    save_job_info:
+      _target_: hydra.experimental.callbacks.PickleJobInfoCallback

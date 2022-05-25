@@ -17,9 +17,16 @@ trainer:
   benchmark: False
 
 hydra:
+  sweep:
+    subdir: ${hydra:job.num}_${hydra:job.id}
   job:
     env_set:
       HYDRA_FULL_ERROR: '1'
+      PYTORCH_CUDA_ALLOC_CONF: 'max_split_size_mb:256'
     env_copy:
       - CAMELYON16_EMBEDDINGS_PATH
-      - PYTORCH_CUDA_ALLOC_CONF
+  callbacks:
+    log_job_return:
+      _target_: hydra.experimental.callbacks.LogJobReturnCallback
+    save_job_info:
+      _target_: hydra.experimental.callbacks.PickleJobInfoCallback
