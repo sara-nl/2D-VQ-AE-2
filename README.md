@@ -24,12 +24,18 @@ Change node type by overwriting the node config, e.g.:
 CAMELYON16_PATH=<camelyon-path> python train.py hydra/launcher/node@hydra.launcher=gpu_titanrtx --multirun
 ```
 
-## WIP results
+## Results
 Top: original, bottom: reconstruction.  
-Input dimensionality: `256×256×3` ordinal 8-bit, latent dimensionality: `32×32` categorical 8-bit (i.e. `99.47%` compression).
+Input dimensionality: `256×256×3@0.5μm` ordinal 8-bit, latent dimensionality: `32×32@16μm` categorical 8-bit (i.e. `99.47%` compression), 0.900 MSE.
 
 ![image](https://user-images.githubusercontent.com/5969044/134488209-4c1696d3-6478-41d0-a7bf-e7e99544382b.png)
 ![image](https://user-images.githubusercontent.com/5969044/134643133-26268fed-d950-4441-82f0-a2358c9d114d.png)
+
+Input dimensionality: `512×512×3@0.25μm` ordinal 8-bit, latent dimensionality: `32×32@16μm` categorical 8-bit (i.e. `99.87%` compression), 0.800 MSE.
+
+![9233614](https://user-images.githubusercontent.com/5969044/171684798-b0bc1242-1941-4dd5-bfc7-d44bb9c59024.png)
+![9233614_2](https://user-images.githubusercontent.com/5969044/171684803-43d1473e-b479-4f3e-a698-cb1f48b1bc74.png)
+
 
 ## Research
 If this repository has helped you in your research we would value to be acknowledged in your publication.
