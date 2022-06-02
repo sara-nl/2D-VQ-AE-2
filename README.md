@@ -25,13 +25,19 @@ CAMELYON16_PATH=<camelyon-path> python train.py hydra/launcher/node@hydra.launch
 ```
 
 ## Results
+Note on Mean Squared-Error results: input is channel-wise normalised to 0-mean, 1-std, using the following values, based on 10k patches:
+|  | Red    | Green  | Blue   |
+|------------------------|--------|--------|--------|
+| Mean                   | 0.7279 | 0.5955 | 0.7762 |
+| Standard Deviation     | 0.2419 | 0.3083 | 0.1741 |
+
 Top: original, bottom: reconstruction.  
-Input dimensionality: `256×256×3@0.5μm` ordinal 8-bit, latent dimensionality: `32×32@16μm` categorical 8-bit (i.e. `99.47%` compression), 0.900 MSE.
+Input dimensionality: `256×256×3@0.5μm` ordinal 8-bit, latent dimensionality: `32×32@16μm` categorical 8-bit (i.e. `99.47%` compression), `0.900 MSE`.
 
 ![image](https://user-images.githubusercontent.com/5969044/134488209-4c1696d3-6478-41d0-a7bf-e7e99544382b.png)
 ![image](https://user-images.githubusercontent.com/5969044/134643133-26268fed-d950-4441-82f0-a2358c9d114d.png)
 
-Input dimensionality: `512×512×3@0.25μm` ordinal 8-bit, latent dimensionality: `32×32@16μm` categorical 8-bit (i.e. `99.87%` compression), 0.800 MSE.
+Input dimensionality: `512×512×3@0.25μm` ordinal 8-bit, latent dimensionality: `32×32@16μm` categorical 8-bit (i.e. `99.87%` compression), `0.800 MSE`.
 
 ![9233614](https://user-images.githubusercontent.com/5969044/171684798-b0bc1242-1941-4dd5-bfc7-d44bb9c59024.png)
 ![9233614_2](https://user-images.githubusercontent.com/5969044/171684803-43d1473e-b479-4f3e-a698-cb1f48b1bc74.png)
