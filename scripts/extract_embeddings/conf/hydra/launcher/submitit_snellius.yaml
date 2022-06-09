@@ -1,4 +1,4 @@
 defaults:
   - submitit_slurm
-  - node@_here_: gpu_a100_shared
+  - node@_here_: fat_soil_shared
   - setup: camelyon16_setup

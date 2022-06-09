@@ -1,0 +1,5 @@
+timeout_min: 7200 # 2.5 days
+partition: fat_soil_shared
+tasks_per_node: 1
+gpus_per_node: 1 # for some reason it needs to be gpus_per_node; gpus_per_task doesn't work.
+cpus_per_task: 20

@@ -17,19 +17,23 @@ def main(checkpoint_dirs):
     with initialize_config_dir(config_dir=checkpoint_dirs.hydra_config_name):
         experiment = compose(config_name='config')  # 'config' is the actual name of the yaml file
 
+
     torch.cuda.empty_cache()
 
     if 'utils' in experiment:
         call(experiment.utils)
 
     trainer: pl.Trainer = instantiate(experiment.trainer)
+
+
+    experiment.train_datamodule.val_dataloader_conf.batch_size = 1
     train_datamodule: pl.LightningDataModule = instantiate(experiment.train_datamodule)
     model: pl.LightningModule = instantiate(
         experiment.model,
         metrics=torchmetrics.MetricCollection([
-            # torchmetrics.MeanSquaredError(),
-            # torchmetrics.image.PSNR(),
-            torchmetrics.image.SSIM(),
+#            torchmetrics.MeanSquaredError(),
+#            torchmetrics.PeakSignalNoiseRatio(),
+            torchmetrics.StructuralSimilarityIndexMeasure(),
         ])
     )
 
@@ -37,7 +41,7 @@ def main(checkpoint_dirs):
         assert i != 1, f'more than one folder found in the lightning_logs folder, please check {path}'
         ckpt_path = str([*(path / 'checkpoints').iterdir()][-1])
 
-    with torch.no_grad():
+    with torch.no_grad(), torch.cuda.amp.autocast():
         trainer.validate(model=model, ckpt_path=ckpt_path, datamodule=train_datamodule)
 
 

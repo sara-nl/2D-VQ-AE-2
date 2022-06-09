@@ -90,17 +90,19 @@ def get_encodings(
 
 
 @torch.no_grad()
-def run_eval(model, dataset, batch_size=2000):
+def run_eval(model, dataset, batch_size=100):
 
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
         pin_memory=True,
-        num_workers=18,
-        prefetch_factor=10
+        num_workers=6,
+        prefetch_factor=5
     )
 
-    torch.backends.cudnn.benchmark = True
+    # for some reason, this LOC can't be pickled, so need to eval string
+    eval('setattr(torch.backends.cudnn, "benchmark", True)')
+
     device = torch.device('cuda')
 
     model = model.to(device)
@@ -114,7 +116,6 @@ def run_eval(model, dataset, batch_size=2000):
     logging.info("Setup complete, starting encoding")
 
     for imgs, labels, (img_index, patch_index, img_path, label_path) in dataloader:
-
         imgs, labels = (
             imgs.to(device, non_blocking=True),
             labels.to(device, non_blocking=True)
