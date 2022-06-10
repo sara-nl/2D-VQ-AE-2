@@ -36,6 +36,13 @@ class CNNClassifier(pl.LightningModule):  # noqa
         ):
             setattr(self, attr_name, attr)
 
+            def init(*modules):
+                for module in modules:
+                    if isinstance(module, nn.Conv2d):
+                        nn.init.kaiming_normal_(model.weight)
+                        nn.init.zeros_(model.bias)
+
+
     def configure_optimizers(self):
         return (
             [(initiated_optim := self.optim(self.parameters()))],
@@ -85,7 +92,7 @@ class CNNClassifier(pl.LightningModule):  # noqa
 
             # --------------------------------------
             # XXX: HACK
-            if len(labels.unique() == 2):
+            if out.shape[1] == 1:
                 mask = labels != 0
                 labels = labels.clone()
                 out, labels = (
