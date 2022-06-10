@@ -19,20 +19,25 @@ def main(experiment):
     if 'trial' in experiment:
         experiment.trainer.callbacks.pytorch_lightning_pruning_callback.trial = experiment.trial
 
-    logging.info("Instantiating trainer")
+    logger = logging.getLogger(__name__)
+
+    logger.info("Instantiating trainer")
     trainer: pl.Trainer = instantiate(experiment.trainer)
 
-    logging.info("Instantiating model")
+    logger.info("Instantiating model")
     model: pl.LightningModule = instantiate(experiment.model)
     model.to(memory_format=torch.channels_last)
 
-    logging.info("Instantiating datamodule")
+    logger.info("Instantiating datamodule")
     datamodule: pl.LightningDataModule = instantiate(experiment.datamodule)
 
-    logging.info("Starting training")
+    logger.info("Running validation epoch before training")
+    trainer.validate(model, datamodule=datamodule)
+
+    logger.info("Starting training")
     trainer.fit(model, datamodule=datamodule)
 
-    logging.info("Training done")
+    logger.info("Training done")
     return trainer.callback_metrics['val_loss'].item()
 
 
