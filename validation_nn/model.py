@@ -60,9 +60,20 @@ class CNNClassifier(pl.LightningModule):  # noqa
             else self.step(inputs, labels)
         )
 
+        if self.loss_f.reduction == 'sum':
+            log_loss = loss / torch.as_tensor(out.shape).prod()
+            self.log(
+                f'{mode}_loss_unreduced',
+                loss,
+                prog_bar=(mode == 'train'),
+                sync_dist=val_or_test
+            )
+        else:
+            log_loss = loss
+
         self.log(
             f'{mode}_loss',
-            loss,
+            log_loss,
             prog_bar=(mode == 'train'),
             sync_dist=val_or_test
         )
@@ -71,7 +82,20 @@ class CNNClassifier(pl.LightningModule):  # noqa
             hasattr(self, (metric_name := f'{mode}_metrics'))
             and (metrics := getattr(self, metric_name)) is not None
         ):
-            out[:, 0][(labels == 0)] = torch.inf  # XXX: HACK
+
+            # --------------------------------------
+            # XXX: HACK
+            if len(labels.unique() == 2):
+                mask = labels != 0
+                labels = labels.clone()
+                out, labels = (
+                    out[mask.unsqueeze(dim=1)],
+                    (labels[mask] - 1).bool()
+                )
+            else:
+                out[:, 0][(labels == 0)] = torch.inf
+            # ---------------------------------------
+
             for name, metric in metrics(out, labels).items():
                 if metric.ndim > 0 and len(metric) > 1:
                     for i, value in enumerate(metric):

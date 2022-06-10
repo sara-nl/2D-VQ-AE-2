@@ -1,8 +1,8 @@
 defaults:
   - optim: adamw
-  - loss_f: cross_entropy
+  - loss_f: bce_with_logits_loss
   - metrics@val_metrics: metric_collection
-  - metrics@val_metrics.metrics: [accuracy, precision, recall]
+  - metrics@val_metrics.metrics: [precision, recall]
   - layers/misc@layers: sequential_from_kwargs
   - layers/misc@layers.embedding: embedding
   - layers/misc@layers.flatten_after_embedding: flatten_after_embedding
@@ -13,31 +13,26 @@ defaults:
   - layers/conv_block/conv_layer@layers.out_conv: same2d
 
   - optional optional_overrides/optim: ${model/optim}
+  - optional optional_overrides/loss_f: ${model/loss_f}_camelyon16_embeddings
 
 _target_: validation_nn.model.CNNClassifier
 
 optim:
   _partial_: true
-  lr: 1e-4
+  lr: 1e-5
 
 val_metrics:
   _convert_: all
   metrics:
-    accuracy:
-      average: weighted
-      num_classes: 3
-      ignore_index: 0
-      mdmc_average: global
+#    accuracy:
+#      average: weighted
+#      num_classes: 3
+#      ignore_index: 0
+#      mdmc_average: global
     precision:
-      num_classes: 3
-      average: null
-      ignore_index: 0
-      mdmc_average: global
+      num_classes: 1
     recall:
-      num_classes: 3
-      average: null
-      ignore_index: 0
-      mdmc_average: global
+      num_classes: 1
 
 layers:
   embedding:
@@ -51,14 +46,4 @@ layers:
     out_channels: ${model.layers.in_conv.out_channels}
   out_conv:
     in_channels: ${model.layers.in_conv.out_channels}
-    out_channels: 3  # [background, tissue, cancer]
-
-loss_f:
-  label_smoothing: 0.001  # just a random guess
-  weight:
-    _target_: torch.Tensor
-    _args_:
-      - [0, 0.0247, 0.9753]  # [background, tissue, cancer] values taken from validation marginal
-#      - [0.001, 0.0237, 0.9743]  # [background, tissue, cancer] values taken from validation marginal
-#      - [1.476, 3.1786, 125]  # the reciprical of the marginal probabilities
-#      - [1.476, 3.1786, 125]
+    out_channels: 1  # [background, tissue, cancer]

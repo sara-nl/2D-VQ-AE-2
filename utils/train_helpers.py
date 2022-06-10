@@ -96,3 +96,45 @@ class ElementsPerSecond(pl.Callback):
             logger.log_metrics({
                 'train_unnormalized_batch_elems_per_sec': imgs_per_sec
             }, step=trainer.fit_loop.epoch_loop._batches_that_stepped)
+
+
+class Camelyon16BCELoss(torch.nn.BCEWithLogitsLoss):
+
+    def __init__(
+        self,
+        weight: Optional[torch.Tensor] = None,
+        size_average=None,
+        reduce=None,
+        reduction='mean',
+        pos_weight=None,
+        label_smoothing: float = 0,
+    ):
+        super().__init__(weight, size_average, reduce, reduction, pos_weight)
+        self.register_buffer('label_smoothing', torch.as_tensor(label_smoothing))
+
+    def forward(self, input: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+        if not (0 <= target).logical_and(target <= 2).all():
+            raise ValueError(
+                "Camelyon16 Targets values are assumed to be 0 (background), 1 (tissue) and 2 (cancer)."
+                f" Instead, found {target.unique()}"
+            )
+
+        mask = target != 0
+        target = target.clone()
+
+        input, target = (
+            input[mask.unsqueeze(dim=1)].unsqueeze(dim=0),
+            (target[mask] - 1).unsqueeze(dim=0)
+        )
+
+        if not target.is_floating_point():
+            target = target.type_as(input)
+
+        if self.label_smoothing != 0:
+            # target = (1 - (target + torch.randn_like(target) * self.label_smoothing % 2)) % 1
+            target = (1 - ((1 + target + torch.randn_like(target) * self.label_smoothing) % 2)).abs()
+            # target = (target + torch.randn_like(target) * self.label_smoothing).clamp(0, 1)
+
+        return super().forward(input, target)
+
+

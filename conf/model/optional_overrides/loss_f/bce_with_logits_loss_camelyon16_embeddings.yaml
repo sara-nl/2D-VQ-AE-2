@@ -1,7 +1,10 @@
 # @package model
 
 loss_f:
+  _target_: utils.train_helpers.Camelyon16BCELoss
   pos_weight:
     _target_: torch.tensor
     _args_:
       - 40.4858  # [background, tissue, cancer] values taken from validation marginal
+  reduction: sum
+  label_smoothing: 0.3 # 3 sigma means prob [0,1] can just about reach [1,0]
