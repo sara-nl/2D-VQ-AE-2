@@ -237,6 +237,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "intel-openmp"
+version = "2022.1.0"
+summary = "Intel® OpenMP* Runtime Library"
+
+[[package]]
 name = "joblib"
 version = "1.1.0"
 requires_python = ">=3.6"
@@ -660,7 +665,7 @@ summary = "Backport of pathlib-compatible object wrapper for zip files"
 
 [metadata]
 lock_version = "3.1"
-content_hash = "sha256:2501925371d6dc60b1544659fc795d6f30c5125d8fb00c0c87ee70bd589b228f"
+content_hash = "sha256:6d5ab1d51cc2d64228fb5b662ee1c43f1391a04e4c30b5d035907d8588c74c3c"
 
 [metadata.files]
 "absl-py 1.0.0" = [
@@ -952,6 +957,13 @@ content_hash = "sha256:2501925371d6dc60b1544659fc795d6f30c5125d8fb00c0c87ee70bd5
     {file = "intel_extension_for_pytorch-1.11.0+cpu-cp38-cp38-linux_x86_64.whl", hash = "sha256:89d6f26695eabf8d4460a0089c7df9ba2e756cc2c3307da13063e08ccbe93135"},
     {file = "intel_extension_for_pytorch-1.11.0+cpu-cp39-cp39-linux_x86_64.whl", hash = "sha256:4f2361d66dd524d9cf2e353389b5cd3182608ff007c09aeafd8e772b11a857c7"},
     {file = "intel_extension_for_pytorch-1.11.0+cpu-cp310-cp310-linux_x86_64.whl", hash = "sha256:6230a5780b74cd2f7741705b51b9e2bb3fd569b5a9c2ebba9de386a983ddbbeb"},
+]
+"intel-openmp 2022.1.0" = [
+    {file = "intel_openmp-2022.1.0-py2.py3-none-macosx_10_15_x86_64.macosx_11_0_x86_64.whl", hash = "sha256:b48c3050d15a16efbdd64439b52ad3f46e0f9b1d324a7499ba07fc1259f2548a"},
+    {file = "intel_openmp-2022.1.0-py2.py3-none-manylinux1_i686.whl", hash = "sha256:282ad02ef131accace562a74d8f3b9251d1a19cdfceaeb4ad7de2f49913200a3"},
+    {file = "intel_openmp-2022.1.0-py2.py3-none-manylinux1_x86_64.whl", hash = "sha256:ec90c6f433f970c0c9dae74db2b973e3731159c2f3ce6c89ba347898a38f643d"},
+    {file = "intel_openmp-2022.1.0-py2.py3-none-win32.whl", hash = "sha256:9e62d22fc182333bbfbcfcc795532e31ee1e99cd65baf5ef80895decb308be96"},
+    {file = "intel_openmp-2022.1.0-py2.py3-none-win_amd64.whl", hash = "sha256:1b0b92d0ca5599686b5024dd6824e47a6756cbe0253ac7782c0ba84ec18f150c"},
 ]
 "joblib 1.1.0" = [
     {file = "joblib-1.1.0-py2.py3-none-any.whl", hash = "sha256:f21f109b3c7ff9d95f8387f752d0d9c34a02aa2f7060c2135f465da0e5160ff6"},
