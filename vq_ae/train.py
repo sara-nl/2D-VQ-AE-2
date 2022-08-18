@@ -7,6 +7,8 @@ from omegaconf import OmegaConf
 
 @hydra.main(config_path="../conf", config_name="vq_ae_camelyon16_config")
 def main(experiment):
+    import oneccl_bindings_for_pytorch
+
     torch.cuda.empty_cache()
 
     OmegaConf.save(experiment, 'experiment.yml')

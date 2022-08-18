@@ -1,5 +1,4 @@
-from collections import Sequence
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from functools import partial
 from math import isclose
 from typing import List, Optional, Tuple, Union

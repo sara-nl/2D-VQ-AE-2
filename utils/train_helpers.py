@@ -1,18 +1,20 @@
+import logging
 import time
-from typing import Optional, Union, Any, Sequence, Dict
+from typing import Optional, Union, Any, Sequence, Dict, Callable
 
 import torch
 import pytorch_lightning as pl
 
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.types import STEP_OUTPUT
+from torch import nn, optim
 
 
 def make_divisible(
-    value: float,
-    divisor: int,
-    divide: bool = True,
-    min_value: Optional[int] = None
+        value: float,
+        divisor: int,
+        divide: bool = True,
+        min_value: Optional[int] = None
 ):
     """
     Edited from: https://github.com/d-li14/efficientnetv2.pytorch/blob/775326e6c16bfc863e9b8400eca7d723dbfeb06e/effnetv2.py#L16
@@ -33,7 +35,7 @@ def maybe_repeat_layer(layer: Union[Any, Sequence], repetitions: int) -> Sequenc
 
 
 class ChannelsLast(pl.Callback):
-    def on_setup(self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage = None) -> None:
+    def on_setup(self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage=None) -> None:
         # Inplace model modification
         pl_module.to(memory_format=torch.channels_last)
         pl_module.configure_optimizers()
@@ -46,12 +48,12 @@ class ElementsPerSecond(pl.Callback):
             raise MisconfigurationException("Cannot use DeviceStatsMonitor callback with Trainer that has no logger.")
 
     def on_train_batch_start(
-        self,
-        trainer: pl.Trainer,
-        pl_module: pl.LightningModule,
-        batch: Any,
-        batch_idx: int,
-        unused: int = 0,
+            self,
+            trainer: pl.Trainer,
+            pl_module: pl.LightningModule,
+            batch: Any,
+            batch_idx: int,
+            unused: int = 0,
     ) -> None:
 
         if not trainer.loggers:
@@ -63,13 +65,13 @@ class ElementsPerSecond(pl.Callback):
         self.train_start_time = time.perf_counter()
 
     def on_train_batch_end(
-        self,
-        trainer: pl.Trainer,
-        pl_module: pl.LightningModule,
-        outputs: STEP_OUTPUT,
-        batch: Any,
-        batch_idx: int,
-        unused: int = 0,
+            self,
+            trainer: pl.Trainer,
+            pl_module: pl.LightningModule,
+            outputs: STEP_OUTPUT,
+            batch: Any,
+            batch_idx: int,
+            unused: int = 0,
     ) -> None:
         if not trainer.loggers:
             raise MisconfigurationException("Cannot use `ElementsPerSecond` callback with `Trainer(logger=False)`.")
@@ -101,13 +103,13 @@ class ElementsPerSecond(pl.Callback):
 class Camelyon16BCELoss(torch.nn.BCEWithLogitsLoss):
 
     def __init__(
-        self,
-        weight: Optional[torch.Tensor] = None,
-        size_average=None,
-        reduce=None,
-        reduction='mean',
-        pos_weight=None,
-        label_smoothing: float = 0,
+            self,
+            weight: Optional[torch.Tensor] = None,
+            size_average=None,
+            reduce=None,
+            reduction='mean',
+            pos_weight=None,
+            label_smoothing: float = 0,
     ):
         super().__init__(weight, size_average, reduce, reduction, pos_weight)
         self.register_buffer('label_smoothing', torch.as_tensor(label_smoothing))
@@ -138,3 +140,38 @@ class Camelyon16BCELoss(torch.nn.BCEWithLogitsLoss):
         return super().forward(input, target)
 
 
+class IntelCPUInit(pl.Callback):
+    """
+    Initializes IPEX, oneccl_bindings_for_pytorch, and optimizes model based on IPEX.optimize
+    """
+
+    def __init__(self, optimize: Optional[Callable[[nn.Module, optim.Optimizer], Optional[nn.Module]]] = None):
+        # optimize should be e.g. a functools.partial intel_extension_for_pytorch.optimize
+        # only including it, so we can add optimizes hparams in a config
+        self.optimize = optimize
+
+        import oneccl_bindings_for_pytorch  # import magic
+        import intel_extension_for_pytorch
+
+
+    def setup(self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage=None) -> None:
+
+        logger = logging.getLogger(__name__)
+        logger.info("Calling optimize")
+        return
+        if isinstance(pl_module.optimizers(), list):
+            raise ValueError("Model has two or more optimizers, Intel CPU optimization only supports one!")
+
+        if not self.optimize:
+            # noinspection PyUnresolvedReferences
+            intel_extension_for_pytorch.optimize(
+                model=pl_module,
+                optimizer=pl_module.optimizers(),
+                inplace=True,
+                split_master_weight_for_bf16=True,
+                fuse_update_step=True,
+                auto_kernel_selection=True
+            )
+        else:
+            breakpoint()
+            self.optimize(model=pl_module, optimizer=pl_module.optimizers(), dtype=torch.bfloat16)

@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Sequence, Tuple, Union, Any  # Sequence deprecated from python 3.9+
 
 import pytorch_lightning as pl
@@ -9,6 +10,9 @@ from torchvision.utils import make_grid
 from utils.conf_helpers import ModuleConf, OptimizerConf
 from utils.train_helpers import maybe_repeat_layer
 from vq_ae.optim.sam import SAM
+
+# TODO: REMOVE
+from pytorch_lightning.strategies import DDPStrategy
 
 class VQAE(pl.LightningModule):  # noqa
 
@@ -48,7 +52,21 @@ class VQAE(pl.LightningModule):  # noqa
         return out, encoding_loss
 
     def configure_optimizers(self):
+        logger = logging.getLogger(__name__)
+        logger.info("Calling configure optimizers")
+
         optim = instantiate(self.optim_conf, params=self.parameters())
+
+        import intel_extension_for_pytorch as ipex
+
+        _, optim = ipex.optimize(
+            model=self,
+            optimizer=optim,
+            inplace=True,
+            level='O1'
+            # auto_kernel_selection=True
+        )
+
         return optim
 
     def training_step(self, batch, batch_idx):
@@ -121,9 +139,9 @@ class VQAE(pl.LightningModule):  # noqa
 
         return out, recon_loss, encoding_loss
 
-    def transfer_batch_to_device(self, batch: torch.Tensor, device: torch.device, dataloader_idx: int) -> torch.Tensor:
-        # FIXME: make the memory_format a parameter
-        return batch.to(device, non_blocking=True, memory_format=torch.channels_last)
+    # def transfer_batch_to_device(self, batch: torch.Tensor, device: torch.device, dataloader_idx: int) -> torch.Tensor:
+    #     # FIXME: make the memory_format a parameter
+    #     return batch.to(device, non_blocking=True, memory_format=torch.channels_last)
 
 
 class Encoder(nn.Module):

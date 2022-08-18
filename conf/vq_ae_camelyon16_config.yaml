@@ -1,7 +1,7 @@
 
 defaults:
   - trainer: ddp_trainer
-  - trainer/callbacks: [elements_per_second,channels_last]
+  - trainer/callbacks: [elements_per_second]
   - model: vq_ae
   - datamodule@train_datamodule: camelyon16_datamodule
   - utils: [seed_everything]
@@ -21,8 +21,8 @@ hydra:
       PYTORCH_CUDA_ALLOC_CONF: "max_split_size_mb:512"
     env_copy:
       - CAMELYON16_PATH
-  callbacks:
-    log_job_return:
-      _target_: hydra.experimental.callbacks.LogJobReturnCallback
-    save_job_info:
-      _target_: hydra.experimental.callbacks.PickleJobInfoCallback
+#  callbacks:
+#    log_job_return:
+#      _target_: hydra.experimental.callbacks.LogJobReturnCallback
+#    save_job_info:
+#      _target_: hydra.experimental.callbacks.PickleJobInfoCallback

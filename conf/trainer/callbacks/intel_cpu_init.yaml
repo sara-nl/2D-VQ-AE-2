@@ -1,0 +1,8 @@
+intel_cpu_init:
+  _target_: utils.train_helpers.IntelCPUInit
+  optimize:
+    _target_: intel_extension_for_pytorch.optimize
+    _partial_: True
+    level: O1
+    inplace: True,
+    auto_kernel_selection: True
