@@ -14,11 +14,11 @@ dependencies = [
     "torchmetrics>=0.8.0",
     "hydra @ git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718", # hydra
     "hydra-submitit-launcher @ git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718#egg=hydra-submitit-launcher&subdirectory=plugins/hydra_submitit_launcher", # hydra_submitit_launcher
-#    "git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718#egg=hydra-optuna-sweeper&subdirectory=plugins/hydra_optuna_sweeper", # hydra_optuna_sweeper
+    #    "git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718#egg=hydra-optuna-sweeper&subdirectory=plugins/hydra_optuna_sweeper", # hydra_optuna_sweeper
     "albumentations>=1.1.0",
     "h5py>=3.6.0",
     "matplotlib>=3.5.2",
-#    "intel-openmp>=2022.1.0",
+    "intel-openmp>=2022.1.0",
 ]
 requires-python = ">=3.9,<3.11"  # scipy doesn't support 3.11 yet
 license = {text = "MIT"}
