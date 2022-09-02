@@ -1,13 +1,23 @@
+import subprocess
+import os
+from logging import getLogger
+
 import hydra
 import pytorch_lightning as pl
 import torch
 from hydra.utils import call, instantiate
 from omegaconf import OmegaConf
 
+logger = getLogger(__name__)
 
 @hydra.main(config_path="../conf", config_name="vq_ae_camelyon16_config")
 def main(experiment):
-    import oneccl_bindings_for_pytorch
+    import oneccl_bindings_for_pytorch  # import magic
+
+    # XXX: hacky test
+    # breakpoint()
+    allocated_cores = subprocess.run(['numactl', '--show'], capture_output=True).stdout.splitlines()[2].decode('UTF-8').strip('physcpubind: ').split()
+    logger.info(f"Allocated cores to process: {allocated_cores}")
 
     torch.cuda.empty_cache()
 
@@ -30,6 +40,7 @@ def main(experiment):
 
 
 if __name__ == '__main__':
+    # exit(0)
     from utils.conf_helpers import add_resolvers
     add_resolvers()
 

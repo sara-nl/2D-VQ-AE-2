@@ -1,13 +1,14 @@
 import logging
+import os
 import time
 from typing import Optional, Union, Any, Sequence, Dict, Callable
 
 import torch
 import pytorch_lightning as pl
-
+from torch import nn, optim
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.types import STEP_OUTPUT
-from torch import nn, optim
+from pytorch_lightning.plugins.environments.cluster_environment import ClusterEnvironment
 
 
 def make_divisible(
@@ -173,5 +174,44 @@ class IntelCPUInit(pl.Callback):
                 auto_kernel_selection=True
             )
         else:
-            breakpoint()
             self.optimize(model=pl_module, optimizer=pl_module.optimizers(), dtype=torch.bfloat16)
+
+
+class IMPIEnvironment(ClusterEnvironment):
+    @property
+    def main_address(self) -> str:
+        breakpoint()
+
+    @property
+    def main_port(self) -> int:
+        breakpoint()
+        pass
+
+    @staticmethod
+    def detect() -> bool:
+        breakpoint()
+        pass
+
+    def world_size(self) -> int:
+        return int(os.environ['PMI_RANK'])
+
+    def set_world_size(self, size: int) -> None:
+        pass
+
+    def global_rank(self) -> int:
+        return int(os.environ['PMI_RANK'])
+
+    def set_global_rank(self, rank: int) -> None:
+        pass
+
+    def local_rank(self) -> int:
+        return int(os.environ['MPI_LOCALRANKID'])
+
+    def node_rank(self) -> int:
+        return int(os.environ['HYDRA_BSTRAP_NODE_ID'])
+        breakpoint()
+        pass
+
+    @property
+    def creates_processes_externally(self) -> bool:
+        return True
