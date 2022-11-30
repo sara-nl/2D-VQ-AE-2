@@ -10,6 +10,7 @@ from omegaconf import OmegaConf
 
 logger = getLogger(__name__)
 
+
 @hydra.main(config_path="../conf", config_name="vq_ae_camelyon16_config")
 def main(experiment):
     import oneccl_bindings_for_pytorch  # import magic
@@ -36,11 +37,10 @@ def main(experiment):
     # we pass the dataloaders explicitely so we can use memory_format=torch.channels
     trainer.fit(model, train_datamodule.train_dataloader(), train_datamodule.val_dataloader())
 
-    return trainer.callback_metrics['val_recon_loss'].item()
+    # return trainer.callback_metrics['val_recon_loss'].item()
 
 
 if __name__ == '__main__':
-    # exit(0)
     from utils.conf_helpers import add_resolvers
     add_resolvers()
 

@@ -6,9 +6,9 @@ from typing import Optional, Union, Any, Sequence, Dict, Callable
 import torch
 import pytorch_lightning as pl
 from torch import nn, optim
+from lightning_lite.plugins.environments.slurm import SLURMEnvironment
 from pytorch_lightning.utilities.exceptions import MisconfigurationException
 from pytorch_lightning.utilities.types import STEP_OUTPUT
-from pytorch_lightning.plugins.environments.cluster_environment import ClusterEnvironment
 
 
 def make_divisible(
@@ -42,7 +42,7 @@ class ChannelsLast(pl.Callback):
         pl_module.configure_optimizers()
 
 
-class ElementsPerSecond(pl.Callback):
+class ElementsPerSecond(pl.callbacks.Callback):
 
     def setup(self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage: Optional[str] = None) -> None:
         if not trainer.loggers:
@@ -177,41 +177,15 @@ class IntelCPUInit(pl.Callback):
             self.optimize(model=pl_module, optimizer=pl_module.optimizers(), dtype=torch.bfloat16)
 
 
-class IMPIEnvironment(ClusterEnvironment):
-    @property
-    def main_address(self) -> str:
-        breakpoint()
-
-    @property
-    def main_port(self) -> int:
-        breakpoint()
-        pass
-
-    @staticmethod
-    def detect() -> bool:
-        breakpoint()
-        pass
+class IMPIEnvironment(SLURMEnvironment):
+    def __init__(self):
+        super().__init__()
 
     def world_size(self) -> int:
-        return int(os.environ['PMI_RANK'])
-
-    def set_world_size(self, size: int) -> None:
-        pass
+        return int(os.environ['PMI_SIZE'])
 
     def global_rank(self) -> int:
         return int(os.environ['PMI_RANK'])
 
-    def set_global_rank(self, rank: int) -> None:
-        pass
-
     def local_rank(self) -> int:
         return int(os.environ['MPI_LOCALRANKID'])
-
-    def node_rank(self) -> int:
-        return int(os.environ['HYDRA_BSTRAP_NODE_ID'])
-        breakpoint()
-        pass
-
-    @property
-    def creates_processes_externally(self) -> bool:
-        return True

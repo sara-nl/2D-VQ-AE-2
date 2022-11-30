@@ -6,19 +6,19 @@ authors = [
     {name = "Robert Jan Schlimbach"},
 ]
 dependencies = [
-    "torch==1.12.0+cpu",
-    "torchvision==0.13.0+cpu",
-    "intel_extension_for_pytorch==1.12.100+cpu",
-    "oneccl_bind_pt==1.12.0+cpu",
-    "pytorch-lightning>=1.6.1",
-    "torchmetrics>=0.8.0",
-    "hydra @ git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718", # hydra
+    "torch==1.13.0+cpu",
+    "torchvision==0.14.0+cpu",
+    "intel_extension_for_pytorch==1.13.0+cpu",
+    "oneccl_bind_pt==1.13.0+cpu",
+    "pytorch-lightning>=1.8.1",
+    "torchmetrics>=0.10.2",
+    "hydra-core @ git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718", # hydra
     "hydra-submitit-launcher @ git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718#egg=hydra-submitit-launcher&subdirectory=plugins/hydra_submitit_launcher", # hydra_submitit_launcher
     #    "git+https://github.com/sara-nl/hydra-2.0.git@179f7467ce274cce13c91ccc212b9e2212823718#egg=hydra-optuna-sweeper&subdirectory=plugins/hydra_optuna_sweeper", # hydra_optuna_sweeper
-    "albumentations>=1.1.0",
-    "h5py>=3.6.0",
-    "matplotlib>=3.5.2",
-    "intel-openmp>=2022.1.0",
+    "albumentations>=1.3.0",
+    "h5py>=3.7.0",
+    "matplotlib>=3.6.2",
+    "intel-openmp>=2022.2.1",
 ]
 requires-python = ">=3.9,<3.11"  # scipy doesn't support 3.11 yet
 license = {text = "MIT"}
@@ -31,12 +31,12 @@ url = "https://download.pytorch.org/whl/cpu"
 name = "torch"
 
 [[tool.pdm.source]]
-url = "https://developer.intel.com/ipex-whl-dev"
-name = "intel-torch-dev"
-
-[[tool.pdm.source]]
 url = "https://software.intel.com/ipex-whl-stable"
 name = "intel-torch"
+
+[[tool.pdm.source]]
+url = "https://developer.intel.com/ipex-whl-stable-cpu"
+name = "intel-torch-cpu"
 
 [tool.pdm.dev-dependencies]
 dev = [

@@ -144,3 +144,6 @@ profiles/
 *.jpg
 
 libtcmalloc.so
+
+# pandas DataFrame pickle
+*.df

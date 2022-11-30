@@ -95,16 +95,16 @@ class ImageReader(object):
         # Configure the data type and the appropriate loader function for it.
         #
         image_dtype = mr_image.getDataType()
-        if image_dtype == mir.UChar:
+        if image_dtype == mir.DataType_UChar:
             self.__dtype = np.uint8
             self.__patch = mr_image.getUCharPatch
-        elif image_dtype == mir.UInt16:
+        elif image_dtype == mir.DataType_UInt16:
             self.__dtype = np.uint16
             self.__patch = mr_image.getUInt16Patch
-        elif image_dtype == mir.UInt32:
+        elif image_dtype == mir.DataType_UInt32:
             self.__dtype = np.uint32
             self.__patch = mr_image.getUInt32Patch
-        elif image_dtype == mir.Float:
+        elif image_dtype == mir.DataType_Float:
             self.__dtype = np.float32
             self.__patch = mr_image.getFloatPatch
         else:
@@ -113,13 +113,13 @@ class ImageReader(object):
         # Configure the pixel color coding method.
         #
         image_color_type = mr_image.getColorType()
-        if image_color_type == mir.Monochrome:
+        if image_color_type == mir.ColorType_Monochrome:
             self.__coding = 'monochrome'
-        elif image_color_type == mir.RGB:
+        elif image_color_type == mir.ColorType_RGB:
             self.__coding = 'rgb'
-        elif image_color_type == mir.ARGB:
+        elif image_color_type == mir.ColorType_ARGB:
             self.__coding = 'argb'
-        elif image_color_type == mir.Indexed:
+        elif image_color_type == mir.ColorType_Indexed:
             self.__coding = 'indexed'
         else:
             raise IOError(f'image: {image_path} color error')
