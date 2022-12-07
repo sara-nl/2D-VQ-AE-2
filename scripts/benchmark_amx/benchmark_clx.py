@@ -15,7 +15,7 @@ def format_args(
         num_steps: int = 50,
         tcmalloc_path: str = '',
         iomp_path: str = '',
-        *args
+        **kwargs
 ) -> list[str]:  # tuple(environment variables, args):
     network_trainer_map = {
         'gloo': 'default_trainer',
@@ -23,6 +23,7 @@ def format_args(
     }
 
     return [
+            *(f"{str(k).upper()}={v}" for k, v in kwargs.items()),
             f"SLURM_TASKS_PER_NODE={num_tasks}",
             f"LD_PRELOAD={':'.join([tcmalloc_path, iomp_path])}",
             "KMP_BLOCKTIME=1",
@@ -35,7 +36,7 @@ def format_args(
             f"trainer={network_trainer_map[network]}",
             "model/optim@model.optim_conf=adam",
             f"trainer.precision={precision}",
-            "train_datamodule.train_dataloader_conf.num_workers=1",
+            "train_datamodule.train_dataloader_conf.num_workers=5",
             "trainer.accelerator=cpu",
             f"trainer.devices={num_tasks}",
             "trainer.num_nodes=1",
@@ -45,7 +46,6 @@ def format_args(
             "trainer.log_every_n_steps=1",
             "trainer.max_epochs=1",
             f"+trainer.limit_train_batches={num_steps}",
-            *args
     ]
 
 
@@ -79,7 +79,7 @@ def main():
     iomp_path = '~/2D-VQ-AE-2/.venv/py310-AMX/lib/libiomp5.so'
     camelyon_path = '~/CAMELYON16/'
 
-    db_path = './results.df'
+    db_path = './results_transposedconv.df'
 
     f_args = partial(
         format_args,
@@ -89,21 +89,25 @@ def main():
         iomp_path=iomp_path
     )
 
-    # icx_run = (
+    icx_run = (
+        {'num_tasks': 1, 'num_threads': 36, 'nodetype': 'icx'},
+        {'num_tasks': 1, 'num_threads': 72, 'nodetype': 'icx'},
+        {'num_tasks': 2, 'num_threads': 35, 'nodetype': 'icx'},
+        {'num_tasks': 2, 'num_threads': 36, 'nodetype': 'icx'},
+        {'num_tasks': 4, 'num_threads': 17, 'nodetype': 'icx'},
+        {'num_tasks': 4, 'num_threads': 18, 'nodetype': 'icx'},
+        {'num_tasks': 8, 'num_threads': 9, 'nodetype': 'icx'},
+        {'num_tasks': 8, 'num_threads': 8, 'nodetype': 'icx'},
+    )
+
+    # SPR_FP32_RUN = (
     #     {'num_tasks': 1, 'num_threads': 72},
     #     {'num_tasks': 2, 'num_threads': 36},
     #     {'num_tasks': 4, 'num_threads': 18},
     #     {'num_tasks': 8, 'num_threads': 9},
     # )
 
-    SPR_FP32_RUN = (
-        {'num_tasks': 1, 'num_threads': 72},
-        {'num_tasks': 2, 'num_threads': 36},
-        {'num_tasks': 4, 'num_threads': 18},
-        {'num_tasks': 8, 'num_threads': 9},
-    )
-
-    n_runs = 4
+    n_runs = 5
     max_failures = 3
 
     for kwargs in icx_run:

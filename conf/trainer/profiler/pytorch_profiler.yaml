@@ -1,0 +1,11 @@
+_target_: pytorch_lightning.profilers.PyTorchProfiler
+
+on_trace_ready:
+  _target_: torch.profiler.tensorboard_trace_handler
+  dir_name: ${hydra:runtime.output_dir}/lightning_logs/
+
+schedule:
+  _target_: torch.profiler.schedule
+  wait: 1
+  warmup: 1
+  active: 5
