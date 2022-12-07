@@ -41,4 +41,5 @@ name = "intel-torch-cpu"
 [tool.pdm.dev-dependencies]
 dev = [
     "rich>=12.4.1",
+    "torch-tb-profiler>=0.4.0",
 ]
