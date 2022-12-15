@@ -11,9 +11,6 @@ from utils.conf_helpers import ModuleConf, OptimizerConf
 from utils.train_helpers import maybe_repeat_layer
 from vq_ae.optim.sam import SAM
 
-# TODO: REMOVE
-from pytorch_lightning.strategies import DDPStrategy
-
 class VQAE(pl.LightningModule):  # noqa
 
     # Optimizer needs runtime self.parameters(), so need to pass conf objects
@@ -56,16 +53,6 @@ class VQAE(pl.LightningModule):  # noqa
         logger.info("Calling configure optimizers")
 
         optim = instantiate(self.optim_conf, params=self.parameters())
-
-        import intel_extension_for_pytorch as ipex
-
-        _, optim = ipex.optimize(
-            model=self,
-            optimizer=optim,
-            inplace=True,
-            level='O1'
-            # auto_kernel_selection=True
-        )
 
         return optim
 

@@ -158,23 +158,33 @@ class IntelCPUInit(pl.Callback):
     def setup(self, trainer: pl.Trainer, pl_module: pl.LightningModule, stage=None) -> None:
 
         logger = logging.getLogger(__name__)
-        logger.info("Calling optimize")
-        return
-        if isinstance(pl_module.optimizers(), list):
+        logger.info("Calling IntelCPUInit")
+
+        optimizers = pl_module.configure_optimizers()
+
+        if isinstance(optimizers, list):
             raise ValueError("Model has two or more optimizers, Intel CPU optimization only supports one!")
 
-        if not self.optimize:
-            # noinspection PyUnresolvedReferences
-            intel_extension_for_pytorch.optimize(
+        dtype = {
+            'bf16': torch.bfloat16,
+            '16': torch.float16,
+            '32': torch.float32,
+            '64': torch.float64,
+        }[str(trainer.precision)]
+
+        _, optims = (
+            self.optimize(model=pl_module, optimizer=optimizers, inplace=True, dtype=dtype)
+            if self.optimize is not None
+            else intel_extension_for_pytorch.optimize(
                 model=pl_module,
-                optimizer=pl_module.optimizers(),
+                optimizer=optimizers,
                 inplace=True,
-                split_master_weight_for_bf16=True,
-                fuse_update_step=True,
-                auto_kernel_selection=True
+                dtype=dtype
             )
-        else:
-            self.optimize(model=pl_module, optimizer=pl_module.optimizers(), dtype=torch.bfloat16)
+        )
+
+        logger.info("Overwriting pl_module.configure_optimizers")
+        pl_module.configure_optimizers = lambda: optims
 
 
 class IMPIEnvironment(SLURMEnvironment):

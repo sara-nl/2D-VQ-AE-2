@@ -1,5 +1,6 @@
 defaults:
   - default_trainer
+  - plugins: [impi_environment]
   - callbacks: [intel_cpu_init]
   - strategy: ddp_strategy_intel_cpu
 

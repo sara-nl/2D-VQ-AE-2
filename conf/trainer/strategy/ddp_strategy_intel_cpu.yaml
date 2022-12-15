@@ -2,4 +2,4 @@ defaults:
   - ddp_strategy
 
 process_group_backend: ccl
-find_unused_parameters: True
+find_unused_parameters: False  # otherwise CCL doesn't work

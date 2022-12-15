@@ -30,7 +30,9 @@ def format_args(
             "KMP_AFFINITY=granularity=fine,compact,1,0",
             f"CAMELYON16_PATH={camelyon_path}",
             f"OMP_NUM_THREADS={num_threads}",
+            "OMP_SCHEDULE=STATIC",
             "mpirun",
+            "-disable-auto-cleanup",  # so many hours wasted to find this one flag
             "python",
             f"{entrypoint_path}",
             f"trainer={network_trainer_map[network]}",
@@ -46,12 +48,22 @@ def format_args(
             "trainer.log_every_n_steps=1",
             "trainer.max_epochs=1",
             f"+trainer.limit_train_batches={num_steps}",
+            *filter(None, ("trainer/plugins=impi_environment" if network == 'ccl' else None,)),
     ]
 
 
 def write_to_file(db_path: str, args: list[str], sec_per_it: float) -> None:
-    # ignore mpirun and python
-    kvs = dict(kv for arg in args if len((kv := arg.strip('+').split('=', maxsplit=1))) == 2)
+    # noinspection PyTypeChecker
+    kvs = dict(
+        kv for arg in args
+        if len(
+            # examples:
+            # "+trainer.num_sanity_val_steps=0" -> ["num_sanity_val_steps", "0"]
+            # "trainer/plugins=impi_environment" -> ["plugins", "impi_environment"]
+            # trainer/foo@trainer.bar -> [""]
+            (kv := arg.strip('+').replace("/", "_").replace(".", "_").replace("@", "_").split('=', maxsplit=1))
+        ) == 2  # ignore single length items such as mpirun and python
+    )
 
     ld_preload = kvs['LD_PRELOAD'].split(':')
     for elem in ld_preload:
@@ -90,14 +102,14 @@ def main():
     )
 
     icx_run = (
-        {'num_tasks': 1, 'num_threads': 36, 'nodetype': 'icx'},
-        {'num_tasks': 1, 'num_threads': 72, 'nodetype': 'icx'},
-        {'num_tasks': 2, 'num_threads': 35, 'nodetype': 'icx'},
-        {'num_tasks': 2, 'num_threads': 36, 'nodetype': 'icx'},
-        {'num_tasks': 4, 'num_threads': 17, 'nodetype': 'icx'},
-        {'num_tasks': 4, 'num_threads': 18, 'nodetype': 'icx'},
-        {'num_tasks': 8, 'num_threads': 9, 'nodetype': 'icx'},
-        {'num_tasks': 8, 'num_threads': 8, 'nodetype': 'icx'},
+        # {'num_tasks': 1, 'num_threads': 36, 'nodetype': 'icx'},
+        # {'num_tasks': 1, 'num_threads': 72, 'nodetype': 'icx'},
+        {'num_tasks': 2, 'num_threads': 35, 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 2, 'num_threads': 36, 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 4, 'num_threads': 17, 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 4, 'num_threads': 18, 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 8, 'num_threads': 9, 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 8, 'num_threads': 8, 'network': 'ccl', 'nodetype': 'icx'},
     )
 
     # SPR_FP32_RUN = (
@@ -108,10 +120,11 @@ def main():
     # )
 
     n_runs = 5
-    max_failures = 3
+    max_failures = 10
 
     for kwargs in icx_run:
         args = f_args(num_steps=50, **kwargs)
+        print(args)
 
         for run_n in range(n_runs):
             output = run(' '.join(args), shell=True, capture_output=True)
