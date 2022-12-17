@@ -160,6 +160,7 @@ class IntelCPUInit(pl.Callback):
         logger = logging.getLogger(__name__)
         logger.info("Calling IntelCPUInit")
 
+        pl_module = pl_module.to(memory_format=torch.channels_last)
         optimizers = pl_module.configure_optimizers()
 
         if isinstance(optimizers, list):
@@ -185,6 +186,18 @@ class IntelCPUInit(pl.Callback):
 
         logger.info("Overwriting pl_module.configure_optimizers")
         pl_module.configure_optimizers = lambda: optims
+
+        def on_before_batch_transfer(batch, dataloader_idx):
+            if isinstance(batch, torch.Tensor):
+                return batch.to(memory_format=torch.channels_last)
+            else:
+                raise NotImplementedError(
+                    "batch is not a straight torch.Tensor, so can't immediately cast to channels_last"
+                    " you need to either stack your dataloader output as a single tensor,"
+                    " or implement your batch transform here (in 2D-VQ-AE-2/utils/train_helpers.py)"
+                )
+
+        pl_module.on_before_batch_transfer = on_before_batch_transfer
 
 
 class IMPIEnvironment(SLURMEnvironment):
