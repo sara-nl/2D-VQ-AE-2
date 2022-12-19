@@ -173,7 +173,7 @@ class IntelCPUInit(pl.Callback):
             '64': torch.float64,
         }[str(trainer.precision)]
 
-        _, optims = (
+        model, optims = (
             self.optimize(model=pl_module, optimizer=optimizers, inplace=True, dtype=dtype)
             if self.optimize is not None
             else intel_extension_for_pytorch.optimize(
@@ -183,6 +183,8 @@ class IntelCPUInit(pl.Callback):
                 dtype=dtype
             )
         )
+
+        print([param.dtype for param in model.parameters()])
 
         logger.info("Overwriting pl_module.configure_optimizers")
         pl_module.configure_optimizers = lambda: optims

@@ -155,10 +155,11 @@ class PreActFixupResBlock(nn.Module):
 
         self.activation = instantiate(activation)
 
-        self.bias1a, self.bias1b, self.bias2a, self.bias2b, self.bias3a, self.bias3b, self.bias4 = (
-            nn.Parameter(torch.zeros(1)) for _ in range(7)
-        )
-        self.scale = nn.Parameter(torch.ones(1))
+        self.params = nn.ParameterDict({
+            **{bias: nn.Parameter(torch.zeros(1)) for bias in
+                ("bias1a", "bias1b", "bias2a", "bias2b", "bias3a", "bias3b", "bias4")},
+            'scale': nn.Parameter(torch.ones(1))
+        })
 
         self.branch_conv1 = instantiate(
             conv_conf['branch_conv1'],
@@ -177,7 +178,7 @@ class PreActFixupResBlock(nn.Module):
         )
 
         if not (mode in ("same", "out") and in_channels == out_channels):
-            self.bias1c, self.bias1d = (
+            self.params['bias1c'], self.params['bias1d'] = (
                 nn.Parameter(torch.zeros(1))
                 for _ in range(2)
             )
@@ -195,19 +196,19 @@ class PreActFixupResBlock(nn.Module):
     def forward(self, inp: torch.Tensor):
         out = inp
 
-        out = self.activation(out + self.bias1a)
-        out = self.branch_conv1(out + self.bias1b)
+        out = self.activation(out + self.params['bias1a'])
+        out = self.branch_conv1(out + self.params['bias1b'])
 
-        out = self.activation(out + self.bias2a)
-        out = self.branch_conv2(out + self.bias2b)
+        out = self.activation(out + self.params['bias2a'])
+        out = self.branch_conv2(out + self.params['bias2b'])
 
-        out = self.activation(out + self.bias3a)
-        out = self.branch_conv3(out + self.bias3b)
+        out = self.activation(out + self.params['bias3a'])
+        out = self.branch_conv3(out + self.params['bias3b'])
 
-        out = out * self.scale + self.bias4
+        out = out * self.params['scale'] + self.params['bias4']
 
         out = out + (
-            self.skip_conv(inp + self.bias1c) + self.bias1d
+            self.skip_conv(inp + self.params['bias1c']) + self.params['bias1d']
             if self.skip_conv is not None
             else inp
         )
