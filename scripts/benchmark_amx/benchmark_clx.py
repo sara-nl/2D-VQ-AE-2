@@ -48,7 +48,6 @@ def format_args(
             "trainer.log_every_n_steps=1",
             "trainer.max_epochs=1",
             f"+trainer.limit_train_batches={num_steps}",
-            *filter(None, ("trainer/plugins=impi_environment" if network == 'ccl' else None,)),
     ]
 
 
@@ -89,9 +88,9 @@ def main():
     entrypoint_path = '~/2D-VQ-AE-2/vq_ae/train.py'
     tcmalloc_path = '~/2D-VQ-AE-2/libtcmalloc.so'
     iomp_path = '~/2D-VQ-AE-2/.venv/py310-AMX/lib/libiomp5.so'
-    camelyon_path = '~/CAMELYON16/'
+    camelyon_path = '~/CAMELYON16-nvme/'
 
-    db_path = './results_transposedconv.df'
+    db_path = './results_onednn3.df'
 
     f_args = partial(
         format_args,
@@ -102,28 +101,57 @@ def main():
     )
 
     icx_run = (
-        # {'num_tasks': 1, 'num_threads': 36, 'nodetype': 'icx'},
-        # {'num_tasks': 1, 'num_threads': 72, 'nodetype': 'icx'},
+        # fp32
+        {'num_tasks': 1, 'num_threads': 36, 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 1, 'num_threads': 72, 'network': 'ccl', 'nodetype': 'icx'},
         {'num_tasks': 2, 'num_threads': 35, 'network': 'ccl', 'nodetype': 'icx'},
         {'num_tasks': 2, 'num_threads': 36, 'network': 'ccl', 'nodetype': 'icx'},
         {'num_tasks': 4, 'num_threads': 17, 'network': 'ccl', 'nodetype': 'icx'},
         {'num_tasks': 4, 'num_threads': 18, 'network': 'ccl', 'nodetype': 'icx'},
         {'num_tasks': 8, 'num_threads': 9, 'network': 'ccl', 'nodetype': 'icx'},
         {'num_tasks': 8, 'num_threads': 8, 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 12, 'num_threads': 5, 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 12, 'num_threads': 6, 'network': 'ccl', 'nodetype': 'icx'},
+        # bf16
+        {'num_tasks': 1, 'num_threads': 36, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 1, 'num_threads': 72, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 2, 'num_threads': 35, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 2, 'num_threads': 36, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 4, 'num_threads': 17, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 4, 'num_threads': 18, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 8, 'num_threads': 9, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 8, 'num_threads': 8, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 12, 'num_threads': 5, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        {'num_tasks': 12, 'num_threads': 6, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
     )
 
-    # SPR_FP32_RUN = (
-    #     {'num_tasks': 1, 'num_threads': 72},
-    #     {'num_tasks': 2, 'num_threads': 36},
-    #     {'num_tasks': 4, 'num_threads': 18},
-    #     {'num_tasks': 8, 'num_threads': 9},
-    # )
+    spr_eea_run = (
+        # fp32
+        {'num_tasks': 1, 'num_threads': 112, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 2, 'num_threads': 56, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 2, 'num_threads': 55, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 4, 'num_threads': 28, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 4, 'num_threads': 27, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 8, 'num_threads': 14, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 8, 'num_threads': 13, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        # bf16
+        {'num_tasks': 1, 'num_threads': 112, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 2, 'num_threads': 56, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 2, 'num_threads': 55, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 4, 'num_threads': 28, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 4, 'num_threads': 27, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 8, 'num_threads': 14, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 8, 'num_threads': 13, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 16, 'num_threads': 7, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 16, 'num_threads': 6, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+    )
 
+    steps_per_run = 100
     n_runs = 5
     max_failures = 10
 
     for kwargs in icx_run:
-        args = f_args(num_steps=50, **kwargs)
+        args = f_args(num_steps=steps_per_run, **kwargs)
         print(args)
 
         for run_n in range(n_runs):
