@@ -1,0 +1,46 @@
+diff --git a/csrc/cpu/aten/kernels/GroupNormKrnl.cpp b/csrc/cpu/aten/kernels/GroupNormKrnl.cpp
+index 705ba5ec..7eafdc3c 100644
+--- a/csrc/cpu/aten/kernels/GroupNormKrnl.cpp
++++ b/csrc/cpu/aten/kernels/GroupNormKrnl.cpp
+@@ -65,7 +65,7 @@ void GroupNormKernelImplInternal(
+       T_ACC mean_val;
+       T_ACC rstd_val;
+       std::tie(mean_val, rstd_val) =
+-          at::native::RowwiseMoments(X_ptr, inner_size);
++          at::native::utils::RowwiseMoments(X_ptr, inner_size);
+       rstd_val = T_ACC(1) / std::sqrt(std::max(rstd_val, T_ACC(0)) + eps);
+       if (gamma_null && beta_null) {
+         T* Y_ptr = Y_data + i * inner_size;
+@@ -992,4 +992,4 @@ REGISTER_DISPATCH(GroupNormKernel, &GroupNormKernelImpl);
+ REGISTER_DISPATCH(GroupNormBackwardKernel, &GroupNormBackwardKernelImpl);
+ 
+ } // namespace cpu
+-} // namespace torch_ipex
+\ No newline at end of file
++} // namespace torch_ipex
+diff --git a/intel_extension_for_pytorch/nn/utils/_weight_cast.py b/intel_extension_for_pytorch/nn/utils/_weight_cast.py
+index 144f088f..1d1eb8c4 100644
+--- a/intel_extension_for_pytorch/nn/utils/_weight_cast.py
++++ b/intel_extension_for_pytorch/nn/utils/_weight_cast.py
+@@ -20,6 +20,8 @@ IPEX_WEIGHT_CAST_MODULE = {
+     torch.nn.Embedding,
+     _LSTM,
+     MergedEmbeddingBag,
++    # Added by RJS
++    torch.nn.ParameterDict,
+ }
+ 
+ def _save_to_state_dict(self, destination, prefix, keep_vars):
+diff --git a/setup.py b/setup.py
+index 3f60bb5e..9b8fad46 100644
+--- a/setup.py
++++ b/setup.py
+@@ -79,7 +79,7 @@ except Exception:
+ #TORCH_VERSION = '1.14.0'
+ #TORCH_VERSION = os.getenv('TORCH_VERSION', TORCH_VERSION)
+ 
+-TORCH_IPEX_VERSION = '1.14.0+cpu'
++TORCH_IPEX_VERSION = '1.13.0+cpu'
+ PYTHON_VERSION = sys.version_info
+ 
+ package_name = "intel_extension_for_pytorch"
