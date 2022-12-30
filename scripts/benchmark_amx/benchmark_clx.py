@@ -12,25 +12,26 @@ def format_args(
         camelyon_path: str,
         network: str = 'gloo',
         precision: str = '32',  # bf16 or fp32
+        batch_size: int = 16,
         num_steps: int = 50,
         tcmalloc_path: str = '',
         iomp_path: str = '',
-        **kwargs
+        **extra_env_variables
 ) -> list[str]:  # tuple(environment variables, args):
     network_trainer_map = {
         'gloo': 'default_trainer',
-        'ccl': 'ddp_trainer_intel_cpu'
+        'ccl': 'ddp_trainer_intel_cpu',
+        'nccl': 'ddp_trainer'
     }
 
     return [
-            *(f"{str(k).upper()}={v}" for k, v in kwargs.items()),
+            *(f"{str(k).upper()}={v}" for k, v in extra_env_variables.items()),
             f"SLURM_TASKS_PER_NODE={num_tasks}",
             f"LD_PRELOAD={':'.join([tcmalloc_path, iomp_path])}",
             "KMP_BLOCKTIME=1",
-            "KMP_AFFINITY=granularity=fine,compact,1,0",
+            "KMP_AFFINITY=granularity=fine,balanced,1,0",
             f"CAMELYON16_PATH={camelyon_path}",
             f"OMP_NUM_THREADS={num_threads}",
-            "OMP_SCHEDULE=STATIC",
             "mpirun",
             "-disable-auto-cleanup",  # so many hours wasted to find this one flag
             "python",
@@ -39,15 +40,16 @@ def format_args(
             "model/optim@model.optim_conf=adam",
             f"trainer.precision={precision}",
             "train_datamodule.train_dataloader_conf.num_workers=5",
-            "trainer.accelerator=cpu",
             f"trainer.devices={num_tasks}",
             "trainer.num_nodes=1",
             "train_datamodule.train_dataloader_conf.dataset.n_patches_per_wsi=1000",
+            f"train_datamodule.train_dataloader_conf.batch_size={batch_size}",
             "+trainer.num_sanity_val_steps=0",
             "+trainer.limit_val_batches=0",
             "trainer.log_every_n_steps=1",
             "trainer.max_epochs=1",
             f"+trainer.limit_train_batches={num_steps}",
+            "+trainer.enable_checkpointing=False",
     ]
 
 
@@ -90,7 +92,7 @@ def main():
     iomp_path = '~/2D-VQ-AE-2/.venv/py310-AMX/lib/libiomp5.so'
     camelyon_path = '~/CAMELYON16-nvme/'
 
-    db_path = './results_onednn3.df'
+    db_path = './results_onednn3_balanced.df'
 
     f_args = partial(
         format_args,
@@ -102,27 +104,32 @@ def main():
 
     icx_run = (
         # fp32
-        {'num_tasks': 1, 'num_threads': 36, 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 1, 'num_threads': 72, 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 2, 'num_threads': 35, 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 2, 'num_threads': 36, 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 4, 'num_threads': 17, 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 4, 'num_threads': 18, 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 8, 'num_threads': 9, 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 8, 'num_threads': 8, 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 12, 'num_threads': 5, 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 12, 'num_threads': 6, 'network': 'ccl', 'nodetype': 'icx'},
-        # bf16
-        {'num_tasks': 1, 'num_threads': 36, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 1, 'num_threads': 72, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 2, 'num_threads': 35, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 2, 'num_threads': 36, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 4, 'num_threads': 17, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 4, 'num_threads': 18, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 8, 'num_threads': 9, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 8, 'num_threads': 8, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 12, 'num_threads': 5, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
-        {'num_tasks': 12, 'num_threads': 6, 'precision': 'bf16', 'network': 'ccl', 'nodetype': 'icx'},
+        # {'num_tasks': 1, 'num_threads': 36, 'network': 'ccl', 'nodetype': 'icx'},  # doesn't work with fine,balanced,1,0
+        {'num_tasks': 1, 'num_threads': 72, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 2, 'num_threads': 35, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 2, 'num_threads': 36, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 4, 'num_threads': 17, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 4, 'num_threads': 18, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 8, 'num_threads': 8, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 8, 'num_threads': 9, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 12, 'num_threads': 5, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 12, 'num_threads': 6, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # # bf16
+        # {'num_tasks': 1, 'num_threads': 36, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 1, 'num_threads': 72, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 2, 'num_threads': 35, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 2, 'num_threads': 36, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 4, 'num_threads': 17, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 4, 'num_threads': 18, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 8, 'num_threads': 8, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 8, 'num_threads': 9, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 12, 'num_threads': 5, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 12, 'num_threads': 6, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+    )
+
+    nccl_run = (
+        {'num_tasks': 1, 'num_threads': 72, 'network': 'nccl', 'batch_size': 16, 'nodetype': 'icx_a100', 'precision': 32}, # decrease batch size for fp32?
+        {'num_tasks': 1, 'num_threads': 72, 'network': 'nccl', 'batch_size': 32, 'nodetype': 'icx_a100', 'precision': 16},
     )
 
     spr_eea_run = (
