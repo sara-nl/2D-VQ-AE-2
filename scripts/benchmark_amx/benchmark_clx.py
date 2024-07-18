@@ -11,7 +11,7 @@ def format_args(
         entrypoint_path: str,
         camelyon_path: str,
         network: str = 'gloo',
-        precision: str = '32',  # bf16 or fp32
+        precision: str = '32',  # bf16, 16, or 32
         batch_size: int = 16,
         num_steps: int = 50,
         tcmalloc_path: str = '',
@@ -32,8 +32,7 @@ def format_args(
             "KMP_AFFINITY=granularity=fine,balanced,1,0",
             f"CAMELYON16_PATH={camelyon_path}",
             f"OMP_NUM_THREADS={num_threads}",
-            "mpirun",
-            "-disable-auto-cleanup",  # so many hours wasted to find this one flag
+            *([["srun"] if network == 'nccl' else ["mpirun", "-disable-auto-cleanup"]][0]),  # so many hours wasted to find this one flag
             "python",
             f"{entrypoint_path}",
             f"trainer={network_trainer_map[network]}",
@@ -94,6 +93,13 @@ def main():
 
     db_path = './results_onednn3_balanced.df'
 
+    # entrypoint_path = '/global/panfs01/users/Xrjschl/2D-VQ-AE-2/vq_ae/train.py'
+    # tcmalloc_path = '/global/panfs01/users/Xrjschl/2D-VQ-AE-2/libtcmalloc.so'
+    # iomp_path = '/global/panfs01/users/Xrjschl/2D-VQ-AE-2/.venv/py310-AMX/lib/libiomp5.so'
+    # camelyon_path = '/global/panfs01/scratch/Xrjschl/CAMELYON16-DEBUG/'
+    #
+    # db_path = './results_onednn3_balanced_endeavour.df'
+
     f_args = partial(
         format_args,
         entrypoint_path=entrypoint_path,
@@ -103,54 +109,61 @@ def main():
     )
 
     icx_run = (
+        #
+        # {'num_tasks': 1, 'num_threads': 71, 'network': 'ccl', 'batch_size': 16, 'nodetype': 'icx'},
+
         # fp32
         # {'num_tasks': 1, 'num_threads': 36, 'network': 'ccl', 'nodetype': 'icx'},  # doesn't work with fine,balanced,1,0
-        {'num_tasks': 1, 'num_threads': 72, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
-        {'num_tasks': 2, 'num_threads': 35, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 1, 'num_threads': 72, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 2, 'num_threads': 35, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
         # {'num_tasks': 2, 'num_threads': 36, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
-        {'num_tasks': 4, 'num_threads': 17, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 4, 'num_threads': 17, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
         # {'num_tasks': 4, 'num_threads': 18, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
-        {'num_tasks': 8, 'num_threads': 8, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 8, 'num_threads': 8, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
         # {'num_tasks': 8, 'num_threads': 9, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
         {'num_tasks': 12, 'num_threads': 5, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
-        # {'num_tasks': 12, 'num_threads': 6, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        {'num_tasks': 12, 'num_threads': 6, 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
         # # bf16
         # {'num_tasks': 1, 'num_threads': 36, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
-        {'num_tasks': 1, 'num_threads': 72, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
-        {'num_tasks': 2, 'num_threads': 35, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 1, 'num_threads': 72, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 2, 'num_threads': 35, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
         # {'num_tasks': 2, 'num_threads': 36, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
-        {'num_tasks': 4, 'num_threads': 17, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 4, 'num_threads': 17, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
         # {'num_tasks': 4, 'num_threads': 18, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
-        {'num_tasks': 8, 'num_threads': 8, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 8, 'num_threads': 8, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
         # {'num_tasks': 8, 'num_threads': 9, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
-        {'num_tasks': 12, 'num_threads': 5, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
+        # {'num_tasks': 12, 'num_threads': 5, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
         # {'num_tasks': 12, 'num_threads': 6, 'precision': 'bf16', 'network': 'ccl', 'batch_size': 32, 'nodetype': 'icx'},
     )
 
     nccl_run = (
-        {'num_tasks': 1, 'num_threads': 72, 'network': 'nccl', 'batch_size': 16, 'nodetype': 'icx_a100', 'precision': 32}, # decrease batch size for fp32?
+        # {'num_tasks': 1, 'num_threads': 72, 'network': 'nccl', 'batch_size': 16, 'nodetype': 'icx_a100', 'precision': 32}, # decrease batch size for fp32?
         {'num_tasks': 1, 'num_threads': 72, 'network': 'nccl', 'batch_size': 32, 'nodetype': 'icx_a100', 'precision': 16},
     )
 
-    spr_eea_run = (
-        # fp32
-        {'num_tasks': 1, 'num_threads': 112, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 2, 'num_threads': 56, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 2, 'num_threads': 55, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 4, 'num_threads': 28, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 4, 'num_threads': 27, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 8, 'num_threads': 14, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 8, 'num_threads': 13, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+    spr_eedq_run = (
         # bf16
-        {'num_tasks': 1, 'num_threads': 112, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 2, 'num_threads': 56, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 2, 'num_threads': 55, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 4, 'num_threads': 28, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 4, 'num_threads': 27, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 8, 'num_threads': 14, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 8, 'num_threads': 13, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 16, 'num_threads': 7, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
-        {'num_tasks': 16, 'num_threads': 6, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'nodetype': 'spr_eea'},
+        {'num_tasks': 1, 'num_threads': 112, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 1, 'num_threads': 111, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 2, 'num_threads': 56, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 2, 'num_threads': 55, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 4, 'num_threads': 28, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 4, 'num_threads': 27, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 8, 'num_threads': 14, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 8, 'num_threads': 13, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 16, 'num_threads': 7, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 16, 'num_threads': 6, 'precision': 'bf16', 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        # fp32
+        {'num_tasks': 1, 'num_threads': 112, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 1, 'num_threads': 111, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 2, 'num_threads': 56, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 2, 'num_threads': 55, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 4, 'num_threads': 28, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 4, 'num_threads': 27, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 8, 'num_threads': 14, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 8, 'num_threads': 13, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 16, 'num_threads': 7, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
+        {'num_tasks': 16, 'num_threads': 6, 'I_MPI_SHM': 'spr', 'I_MPI_FABRICS': 'shm', 'network': 'ccl', 'nodetype': 'spr_eedq', 'batch_size': 32},
     )
 
     steps_per_run = 100
@@ -177,7 +190,7 @@ def main():
                 continue
 
             sec_per_it = (
-                1/float(sec_per_it.strip('it/s'))
+                round(1/float(sec_per_it.strip('it/s'), 2))
                 if 'it/s' in sec_per_it
                 else float(sec_per_it.strip('s/it'))
             )
